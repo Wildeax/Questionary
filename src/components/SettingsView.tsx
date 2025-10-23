@@ -1,7 +1,9 @@
 import { useState } from "react";
+import type { QuizData } from "../types";
 
 type SettingsProps = {
   questionCount: number;
+  quizMetadata: QuizData | null;
   onStartQuiz: (_settings: QuizSettings) => void;
 };
 
@@ -9,7 +11,7 @@ export type QuizSettings = {
   randomOrder: boolean;
 };
 
-export function SettingsView({ questionCount, onStartQuiz }: SettingsProps) {
+export function SettingsView({ questionCount, quizMetadata, onStartQuiz }: SettingsProps) {
   const [randomOrder, setRandomOrder] = useState(false);
 
   const handleStartQuiz = () => {
@@ -20,6 +22,16 @@ export function SettingsView({ questionCount, onStartQuiz }: SettingsProps) {
     <div className="w-full min-h-[70vh] flex flex-col items-center justify-center gap-6">
       <div className="max-w-3xl w-full">
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
+          {/* Quiz Title and Author */}
+          <div className="mb-6 pb-4 border-b border-neutral-800">
+            <h1 className="text-3xl font-bold text-center mb-2">
+              {quizMetadata?.metadata.name || "Untitled Quiz"}
+            </h1>
+            <p className="text-sm text-neutral-400 text-center">
+              by {quizMetadata?.metadata.author || "Unknown"}
+            </p>
+          </div>
+
           <h2 className="text-2xl font-semibold mb-2">Quiz Settings</h2>
           <p className="text-sm text-neutral-400 mb-6">
             Configure your quiz preferences before starting. You have {questionCount} question{questionCount !== 1 ? 's' : ''} loaded.

@@ -205,7 +205,7 @@ export default function QuizPage() {
       <header className="w-full border-b border-neutral-800 sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
         <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between">
           <h1 className="text-lg sm:text-xl font-semibold tracking-tight">
-            Unity Senior Certified — Questionnaire
+            Questionary
           </h1>
           <div className="text-sm tabular-nums opacity-80">
             {(view === "quiz" || view === "results") && (
@@ -243,6 +243,7 @@ export default function QuizPage() {
         {view === "settings" && (
           <SettingsView
             questionCount={originalQuestions.length}
+            quizMetadata={quizData}
             onStartQuiz={handleStartQuiz}
           />
         )}
