@@ -1,7 +1,7 @@
 {
-  "name": "unity-senior-certified-quiz",
+  "name": "questionary",
   "version": "1.0.0",
-  "description": "Unity Senior Certified quiz application",
+  "description": "A modern, interactive quiz application for educational purposes",
   "main": "index.js",
   "scripts": {
     "dev": "vite",

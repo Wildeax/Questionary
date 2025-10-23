@@ -18,13 +18,3 @@ export type TFQuestion = BaseQuestion & {
 };
 
 export type Question = MCQuestion | TFQuestion;
-
-export type QuestionaryMeta = {
-  name: string;
-  author: string;
-};
-
-export type ParsedQuestionary = {
-  meta: QuestionaryMeta;
-  questions: Question[];
-};

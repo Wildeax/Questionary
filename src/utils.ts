@@ -1,11 +1,5 @@
 import * as yaml from "js-yaml";
-import type {
-  Question,
-  MCQuestion,
-  TFQuestion,
-  ParsedQuestionary,
-  QuestionaryMeta,
-} from "./types";
+import type { Question, MCQuestion, TFQuestion } from "./types";
 
 // -------------------- Helpers --------------------
 
@@ -17,19 +11,22 @@ export function isTF(q: Question): q is TFQuestion {
   return q.type === "tf";
 }
 
-export function parseQuestionsFromText(text: string): ParsedQuestionary {
-  const parsed = tryParseJSON(text) ?? tryParseYAML(text);
-  if (parsed === null) {
-    throw new Error("Unable to parse as JSON or YAML. Check your syntax.");
+export function parseQuestionsFromText(text: string): Question[] {
+  // Try JSON first
+  try {
+    const json = JSON.parse(text);
+    const arr = Array.isArray(json) ? json : [json];
+    return validateQuestions(arr);
+  } catch (_) {
+    // Fallback to YAML
+    try {
+      const doc = yaml.load(text);
+      const arr = Array.isArray(doc) ? doc : [doc];
+      return validateQuestions(arr as unknown[]);
+    } catch (e) {
+      throw new Error("Unable to parse as JSON or YAML. Check your syntax.");
+    }
   }
-
-  const { meta, questions } = normalizeQuestionaryDoc(parsed);
-  const validated = validateQuestions(questions);
-
-  return {
-    meta,
-    questions: validated,
-  };
 }
 
 export function validateQuestions(raw: any[]): Question[] {
@@ -85,57 +82,6 @@ export function validateQuestions(raw: any[]): Question[] {
     throw new Error(errors.join("\n"));
   }
   return out;
-}
-
-function tryParseJSON(text: string): unknown | null {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
-function tryParseYAML(text: string): unknown | null {
-  try {
-    return yaml.load(text);
-  } catch {
-    return null;
-  }
-}
-
-function normalizeQuestionaryDoc(input: unknown): { meta: QuestionaryMeta; questions: any[] } {
-  if (!input || typeof input !== "object" || Array.isArray(input)) {
-    throw new Error(
-      "Expected a document object with 'questionaryName', 'author', and a 'questions' array."
-    );
-  }
-
-  const obj = input as Record<string, unknown>;
-  const rawName = obj.questionaryName ?? obj.name;
-  const rawAuthor = obj.author;
-  const rawQuestions = obj.questions;
-
-  if (typeof rawName !== "string" || rawName.trim() === "") {
-    throw new Error("Missing required field 'questionaryName' (non-empty string).");
-  }
-
-  if (typeof rawAuthor !== "string" || rawAuthor.trim() === "") {
-    throw new Error("Missing required field 'author' (non-empty string).");
-  }
-
-  if (!Array.isArray(rawQuestions)) {
-    throw new Error("Missing required field 'questions' (array of questions).");
-  }
-
-  const meta: QuestionaryMeta = {
-    name: rawName.trim(),
-    author: rawAuthor.trim(),
-  };
-
-  return {
-    meta,
-    questions: rawQuestions,
-  };
 }
 
 export function formatCorrectAnswer(q: Question): string {
