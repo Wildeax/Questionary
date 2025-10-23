@@ -377,7 +377,7 @@ export default function QuizPage() {
           />
         )}
 
-        {view === "quiz" && current && (
+        {view === "quiz" && current && quizData && (
           <QuestionPage
             question={current}
             index={currentIndex}
@@ -389,6 +389,7 @@ export default function QuizPage() {
             onNext={handleNext}
             onFinish={handleFinish}
             onQuit={handleQuitQuiz}
+            quizMetadata={quizData.metadata}
           />
         )}
 

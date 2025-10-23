@@ -1,4 +1,4 @@
-import type { Question } from "../types";
+import type { Question, QuizMetadata } from "../types";
 import { isMC } from "../utils";
 
 type QuestionPageProps = {
@@ -12,6 +12,7 @@ type QuestionPageProps = {
   onNext: () => void;
   onFinish: () => void;
   onQuit: () => void;
+  quizMetadata: QuizMetadata;
 };
 
 export function QuestionPage({
@@ -25,11 +26,15 @@ export function QuestionPage({
   onNext,
   onFinish,
   onQuit,
+  quizMetadata,
 }: QuestionPageProps) {
   return (
     <div className="min-h-[70vh] flex flex-col">
       <div className="flex-1 flex">
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl w-full flex flex-col">
+          <div className="mb-2 text-xs text-neutral-500">
+            {quizMetadata.name} - Questionary{quizMetadata.author ? ` (${quizMetadata.author})` : ''}
+          </div>
           <div className="mb-4 text-sm text-neutral-400">Question {index + 1} of {total}</div>
           <h2 className="text-2xl font-semibold leading-snug mb-6">{question.prompt}</h2>
 
