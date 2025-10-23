@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Question, QuizData } from "./types";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Question, QuizData, QuizSettings, SavedQuizState } from "./types";
 import { parseQuestionsFromText } from "./utils";
-import { saveQuizState, loadQuizState, clearQuizState } from "./storage";
+import { saveQuizProgress, loadQuizProgress, clearQuizProgress } from "./storage";
 import { SetupView } from "./components/SetupView";
-import { SettingsView, type QuizSettings } from "./components/SettingsView";
+import { SettingsView } from "./components/SettingsView";
 import { QuestionPage } from "./components/QuestionPage";
 import { ResultsView } from "./components/ResultsView";
 
@@ -60,16 +60,16 @@ import { ResultsView } from "./components/ResultsView";
 
 export default function QuizPage() {
   const [view, setView] = useState<"setup" | "settings" | "quiz" | "results">("setup");
-  // @ts-ignore - quizData is stored for future use but not currently used
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [originalQuestions, setOriginalQuestions] = useState<Question[]>([]);
-  // eslint-disable-next-line no-unused-vars
-  const [_quizSettings, setQuizSettings] = useState<QuizSettings>({ randomOrder: false });
+  const [quizSettings, setQuizSettings] = useState<QuizSettings>({ randomOrder: false });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | boolean | undefined>>({});
   const [error, setError] = useState<string | null>(null);
-  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const [savedQuizData, setSavedQuizData] = useState<SavedQuizState | null>(null);
+  const [savedQuizId, setSavedQuizId] = useState<string | null>(null);
+  const restoringQuizRef = useRef(false);
 
   const total = questions.length;
   const current = questions[currentIndex];
@@ -79,38 +79,79 @@ export default function QuizPage() {
     [answers]
   );
 
-  const progressPct = total ? Math.round((answeredCount / total) * 100) : 0;
+  function buildSavedQuizState(quizId: string): SavedQuizState | null {
+    if (!quizData) return null;
 
-  // Load saved quiz state on component mount
+    const questionOrder = questions.map((q) => q.id);
+    const currentQuestion = questions[currentIndex] ?? null;
+    const orderedQuestionsSnapshot = questions.map((q) => ({ ...q }));
+
+    return {
+      id: quizId,
+      quizData,
+      settings: quizSettings,
+      answers,
+      currentIndex,
+      timestamp: Date.now(),
+      completed: total > 0 && answeredCount === total,
+      questionOrder,
+      currentQuestionId: currentQuestion ? currentQuestion.id : null,
+      orderedQuestions: orderedQuestionsSnapshot,
+    };
+  }
+
+  // Load saved quiz progress on app start
   useEffect(() => {
-    const savedState = loadQuizState();
-    if (savedState) {
-      setView(savedState.view);
-      setQuestions(savedState.questions);
-      setCurrentIndex(savedState.currentIndex);
-      setAnswers(savedState.answers);
-      setShowResumePrompt(true);
-    }
+    const loadSavedProgress = async () => {
+      try {
+        const savedQuiz = await loadQuizProgress();
+        if (savedQuiz && !savedQuiz.completed) {
+          // Check if saved quiz is recent (within 7 days)
+          const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+          if (savedQuiz.timestamp > sevenDaysAgo) {
+            setSavedQuizData(savedQuiz);
+          }
+        }
+      } catch (error) {
+        console.warn("Failed to load saved progress:", error);
+      }
+    };
+
+    loadSavedProgress();
   }, []);
 
-  // Save quiz state whenever it changes
+  // Auto-save progress when answers change
   useEffect(() => {
-    if (questions.length > 0) {
-      saveQuizState({
-        view,
-        questions,
-        currentIndex,
-        answers,
-        timestamp: Date.now()
-      });
-    }
-  }, [view, questions, currentIndex, answers]);
+    const autoSave = async () => {
+      if (quizData && savedQuizId && view === "quiz" && answeredCount > 0) {
+        try {
+          const payload = buildSavedQuizState(savedQuizId);
+          if (!payload) return;
+          await saveQuizProgress(payload);
+          setSavedQuizData(payload);
+        } catch (error) {
+          console.warn("Auto-save failed:", error);
+        }
+      }
+    };
+
+    // Debounce auto-save to avoid excessive saves
+    const timeoutId = setTimeout(autoSave, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [quizData, savedQuizId, answers, currentIndex, view, answeredCount, total, quizSettings, questions]);
+
+  const progressPct = total ? Math.round((answeredCount / total) * 100) : 0;
 
   // Reset navigation when a new set of questions is loaded
   useEffect(() => {
+    if (restoringQuizRef.current) {
+      // When restoring a saved quiz we keep the stored progress intact.
+      restoringQuizRef.current = false;
+      return;
+    }
+
     setCurrentIndex(0);
     setAnswers({});
-    clearQuizState(); // Clear saved state when new questions are loaded
   }, [questions]);
 
   function onSelectAnswer(value: number | boolean) {
@@ -145,20 +186,107 @@ export default function QuizPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleResumeQuiz() {
-    setShowResumePrompt(false);
-    // Quiz state is already loaded, just hide the prompt
+  async function handleQuitQuiz() {
+    if (!quizData) {
+      setView("setup");
+      return;
+    }
+
+    let quizId = savedQuizId;
+    if (!quizId) {
+      quizId = `quiz_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      setSavedQuizId(quizId);
+    }
+
+    const payload = buildSavedQuizState(quizId);
+
+    if (payload) {
+      try {
+        await saveQuizProgress(payload);
+        setSavedQuizData(payload);
+      } catch (error) {
+        console.warn("Failed to save quiz before quitting:", error);
+      }
+    }
+
+    setView("setup");
   }
 
-  function handleClearSavedQuiz() {
-    clearQuizState();
+  async function handleResumeQuiz() {
+    if (!savedQuizData) return;
+
+    restoringQuizRef.current = true;
+
+    const baseQuestions = savedQuizData.quizData.questions;
+    const byId = new Map(baseQuestions.map((q) => [q.id, q]));
+
+    const savedOrderIds =
+      savedQuizData.questionOrder && savedQuizData.questionOrder.length > 0
+        ? savedQuizData.questionOrder
+        : savedQuizData.orderedQuestions?.map((q) => q.id);
+
+    let orderedQuestions: Question[] = baseQuestions;
+    if (savedOrderIds && savedOrderIds.length > 0) {
+      const mapped = savedOrderIds
+        .map((id) => byId.get(id))
+        .filter((q): q is Question => Boolean(q));
+
+      if (mapped.length > 0) {
+        const mappedIds = new Set(mapped.map((q) => q.id));
+        const missing = baseQuestions.filter((q) => !mappedIds.has(q.id));
+        orderedQuestions = [...mapped, ...missing];
+      } else if (savedQuizData.orderedQuestions && savedQuizData.orderedQuestions.length > 0) {
+        orderedQuestions = savedQuizData.orderedQuestions;
+      }
+    } else if (savedQuizData.orderedQuestions && savedQuizData.orderedQuestions.length > 0) {
+      orderedQuestions = savedQuizData.orderedQuestions;
+    }
+
+    setQuizData(savedQuizData.quizData);
+    setOriginalQuestions(baseQuestions);
+    setQuestions(orderedQuestions);
+    setQuizSettings(savedQuizData.settings);
+    setAnswers(savedQuizData.answers);
+    setSavedQuizId(savedQuizData.id);
+
+    let restoredIndex = savedQuizData.currentIndex;
+    if (savedQuizData.currentQuestionId) {
+      const idx = orderedQuestions.findIndex((q) => q.id === savedQuizData.currentQuestionId);
+      if (idx !== -1) {
+        restoredIndex = idx;
+      }
+    }
+    if (orderedQuestions.length === 0) {
+      restoredIndex = 0;
+    } else {
+      restoredIndex = Math.min(Math.max(restoredIndex, 0), orderedQuestions.length - 1);
+    }
+    setCurrentIndex(restoredIndex);
+
+    setView("quiz");
+    setSavedQuizData(null);
+  }
+
+  async function handleClearSavedQuiz() {
+    try {
+      if (savedQuizId) {
+        await clearQuizProgress(savedQuizId);
+      }
+      if (savedQuizData) {
+        await clearQuizProgress(savedQuizData.id);
+      }
+    } catch (error) {
+      console.warn("Failed to clear saved quiz:", error);
+    }
     setView("setup");
+    setQuizData(null);
     setQuestions([]);
     setOriginalQuestions([]);
     setQuizSettings({ randomOrder: false });
     setCurrentIndex(0);
     setAnswers({});
-    setShowResumePrompt(false);
+    setSavedQuizId(null);
+    setSavedQuizData(null);
   }
 
   function handleLoadText(text: string) {
@@ -169,8 +297,9 @@ export default function QuizPage() {
       setOriginalQuestions(parsed.questions);
       setQuestions(parsed.questions);
       setQuizSettings({ randomOrder: false }); // Reset settings when loading new questions
+      // Generate new quiz ID for this session
+      setSavedQuizId(`quiz_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
       setView("settings");
-      setShowResumePrompt(false);
     } catch (e: any) {
       setError(e?.message || String(e));
     }
@@ -234,7 +363,7 @@ export default function QuizPage() {
             error={error}
             onPasteLoad={handleLoadText}
             onFileSelected={handleUploadFile}
-            showResumePrompt={showResumePrompt}
+            savedQuiz={savedQuizData}
             onResume={handleResumeQuiz}
             onClearSaved={handleClearSavedQuiz}
           />
@@ -259,6 +388,7 @@ export default function QuizPage() {
             onPrev={handlePrev}
             onNext={handleNext}
             onFinish={handleFinish}
+            onQuit={handleQuitQuiz}
           />
         )}
 

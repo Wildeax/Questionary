@@ -1,39 +1,67 @@
 import { useState } from "react";
 import { getTemplate } from "../templates";
+import type { SavedQuizState } from "../types";
 
 type SetupProps = {
   error: string | null;
   onPasteLoad: (_text: string) => void;
   onFileSelected: (_file: File) => void;
-  showResumePrompt: boolean;
+  savedQuiz: SavedQuizState | null;
   onResume: () => void;
   onClearSaved: () => void;
 };
 
-export function SetupView({ error, onPasteLoad, onFileSelected: _onFileSelected, showResumePrompt, onResume, onClearSaved }: SetupProps) {
+export function SetupView({ error, onPasteLoad, onFileSelected: _onFileSelected, savedQuiz, onResume, onClearSaved }: SetupProps) {
   const [text, setText] = useState("");
 
   return (
     <div className="w-full min-h-[70vh] flex flex-col items-center justify-center gap-6">
-      {showResumePrompt && (
+      {savedQuiz && (
         <div className="max-w-3xl w-full">
           <div className="bg-blue-900/20 border border-blue-500/50 rounded-2xl p-6 shadow-xl">
-            <h3 className="text-xl font-semibold mb-2 text-blue-400">Resume Previous Quiz?</h3>
-            <p className="text-sm text-neutral-300 mb-4">
-              We found an unfinished quiz from your last session. Would you like to continue where you left off?
-            </p>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-semibold text-blue-400 mb-1">Continue Saved Quiz</h3>
+                <div className="text-sm text-neutral-300">
+                  <div className="font-medium text-lg">{savedQuiz.quizData.metadata.name}</div>
+                  <div className="text-neutral-400">by {savedQuiz.quizData.metadata.author || "Unknown"}</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-neutral-400">
+                  {Object.keys(savedQuiz.answers).filter(key => savedQuiz.answers[key] !== undefined).length} of {savedQuiz.quizData.questions.length} answered
+                </div>
+                <div className="text-sm font-medium text-blue-400">
+                  {Math.round((Object.keys(savedQuiz.answers).filter(key => savedQuiz.answers[key] !== undefined).length / savedQuiz.quizData.questions.length) * 100)}% complete
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="w-full bg-neutral-700 rounded-full h-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round((Object.keys(savedQuiz.answers).filter(key => savedQuiz.answers[key] !== undefined).length / savedQuiz.quizData.questions.length) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="text-sm text-neutral-300 mb-4">
+              Last saved: {new Date(savedQuiz.timestamp).toLocaleString()}
+            </div>
+
             <div className="flex gap-3">
               <button
                 onClick={onResume}
-                className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-blue-600 hover:bg-blue-500 transition font-medium"
+                className="inline-flex items-center justify-center rounded-xl px-6 py-2 bg-blue-600 hover:bg-blue-500 transition font-medium"
               >
-                Resume Quiz
+                Continue Quiz
               </button>
               <button
                 onClick={onClearSaved}
-                className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 transition"
+                className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 transition text-sm"
               >
-                Start New Quiz
+                Delete & Start New
               </button>
             </div>
           </div>

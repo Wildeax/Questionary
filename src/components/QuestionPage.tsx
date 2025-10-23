@@ -11,6 +11,7 @@ type QuestionPageProps = {
   onPrev: () => void;
   onNext: () => void;
   onFinish: () => void;
+  onQuit: () => void;
 };
 
 export function QuestionPage({
@@ -22,7 +23,8 @@ export function QuestionPage({
   onChange,
   onPrev,
   onNext,
-  onFinish
+  onFinish,
+  onQuit,
 }: QuestionPageProps) {
   return (
     <div className="min-h-[70vh] flex flex-col">
@@ -89,35 +91,45 @@ export function QuestionPage({
             </div>
           )}
 
-          <div className="mt-8 flex items-center justify-between">
-            <button
-              onClick={onPrev}
-              disabled={index === 0}
-              className="rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 disabled:hover:bg-neutral-800"
-            >
-              Previous
-            </button>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-3">
+              <button
+                onClick={onQuit}
+                className="rounded-xl px-4 py-2 bg-red-600 hover:bg-red-500 active:bg-red-700 transition"
+              >
+                Quit
+              </button>
+              <button
+                onClick={onPrev}
+                disabled={index === 0}
+                className="rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 disabled:hover:bg-neutral-800"
+              >
+                Previous
+              </button>
+            </div>
 
-            {index < total - 1 ? (
-              <button
-                onClick={onNext}
-                disabled={!isAnswered}
-                className={`rounded-xl px-4 py-2 ${
-                  isAnswered
-                    ? "bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700"
-                    : "bg-neutral-700 cursor-not-allowed opacity-50"
-                }`}
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                onClick={onFinish}
-                className="rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700"
-              >
-                Finish
-              </button>
-            )}
+            <div>
+              {index < total - 1 ? (
+                <button
+                  onClick={onNext}
+                  disabled={!isAnswered}
+                  className={`rounded-xl px-4 py-2 ${
+                    isAnswered
+                      ? "bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700"
+                      : "bg-neutral-700 cursor-not-allowed opacity-50"
+                  }`}
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  onClick={onFinish}
+                  className="rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700"
+                >
+                  Finish
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -1,60 +1,193 @@
-import type { Question } from "./types";
+import type { SavedQuizState } from "./types";
 
-const QUIZ_STORAGE_KEY = "unity_senior_certified_quiz";
+// IndexedDB configuration
+const DB_NAME = "QuestionaryDB";
+const DB_VERSION = 1;
+const QUIZZES_STORE = "quizzes";
 
-// Storage interface for quiz state
-export interface QuizState {
-  view: "setup" | "settings" | "quiz" | "results";
-  questions: Question[];
-  currentIndex: number;
-  answers: Record<string, number | boolean | undefined>;
-  timestamp: number;
+// IndexedDB helper functions
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => {
+      console.warn("IndexedDB error:", request.error);
+      reject(new Error("Failed to open database"));
+    };
+
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
+
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+
+      // Create quizzes store if it doesn't exist
+      if (!db.objectStoreNames.contains(QUIZZES_STORE)) {
+        const store = db.createObjectStore(QUIZZES_STORE, { keyPath: "id" });
+        store.createIndex("timestamp", "timestamp", { unique: false });
+      }
+    };
+  });
 }
 
-// Save quiz state to localStorage
-export function saveQuizState(state: QuizState): void {
+// Save quiz progress to IndexedDB
+export async function saveQuizProgress(state: SavedQuizState): Promise<void> {
   try {
-    localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify({
-      ...state,
-      timestamp: Date.now()
-    }));
+    const db = await openDB();
+    const transaction = db.transaction([QUIZZES_STORE], "readwrite");
+    const store = transaction.objectStore(QUIZZES_STORE);
+
+    // Add/update the quiz state
+    await new Promise<void>((resolve, reject) => {
+      const request = store.put(state);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+
+    db.close();
   } catch (error) {
-    console.warn("Failed to save quiz state to localStorage:", error);
+    console.warn("Failed to save quiz progress:", error);
+    throw new Error("Failed to save quiz progress. Please try again.");
   }
 }
 
-// Load quiz state from localStorage
-export function loadQuizState(): QuizState | null {
+// Load the most recent quiz progress
+export async function loadQuizProgress(): Promise<SavedQuizState | null> {
   try {
-    const stored = localStorage.getItem(QUIZ_STORAGE_KEY);
-    if (!stored) return null;
+    const db = await openDB();
+    const transaction = db.transaction([QUIZZES_STORE], "readonly");
+    const store = transaction.objectStore(QUIZZES_STORE);
+    const index = store.index("timestamp");
 
-    const parsed = JSON.parse(stored) as QuizState & { timestamp: number };
+    // Get the most recent quiz (by timestamp)
+    const request = index.openCursor(null, "prev");
 
-    // Check if data is from today (within 24 hours)
-    const isRecent = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000;
-    if (!isRecent) {
-      localStorage.removeItem(QUIZ_STORAGE_KEY);
-      return null;
-    }
+    return new Promise<SavedQuizState | null>((resolve, reject) => {
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (cursor) {
+          resolve(cursor.value as SavedQuizState);
+        } else {
+          resolve(null);
+        }
+      };
 
-    return parsed;
+      request.onerror = () => {
+        reject(request.error);
+      };
+    }).finally(() => {
+      db.close();
+    });
   } catch (error) {
-    console.warn("Failed to load quiz state from localStorage:", error);
+    console.warn("Failed to load quiz progress:", error);
     return null;
   }
 }
 
-// Clear quiz state from localStorage
-export function clearQuizState(): void {
+// Get all saved quizzes
+export async function getAllSavedQuizzes(): Promise<SavedQuizState[]> {
   try {
-    localStorage.removeItem(QUIZ_STORAGE_KEY);
+    const db = await openDB();
+    const transaction = db.transaction([QUIZZES_STORE], "readonly");
+    const store = transaction.objectStore(QUIZZES_STORE);
+    const index = store.index("timestamp");
+
+    // Get all quizzes sorted by timestamp (newest first)
+    const request = index.openCursor(null, "prev");
+
+    return new Promise<SavedQuizState[]>((resolve, reject) => {
+      const results: SavedQuizState[] = [];
+
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (cursor) {
+          results.push(cursor.value as SavedQuizState);
+          cursor.continue();
+        } else {
+          resolve(results);
+        }
+      };
+
+      request.onerror = () => {
+        reject(request.error);
+      };
+    }).finally(() => {
+      db.close();
+    });
   } catch (error) {
-    console.warn("Failed to clear quiz state from localStorage:", error);
+    console.warn("Failed to get saved quizzes:", error);
+    return [];
   }
 }
 
-// Check if there's a saved quiz state
+// Clear a specific quiz progress
+export async function clearQuizProgress(quizId: string): Promise<void> {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction([QUIZZES_STORE], "readwrite");
+    const store = transaction.objectStore(QUIZZES_STORE);
+
+    await new Promise<void>((resolve, reject) => {
+      const request = store.delete(quizId);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+
+    db.close();
+  } catch (error) {
+    console.warn("Failed to clear quiz progress:", error);
+    throw new Error("Failed to clear quiz progress.");
+  }
+}
+
+// Clear all quiz progress (for cleanup)
+export async function clearAllQuizProgress(): Promise<void> {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction([QUIZZES_STORE], "readwrite");
+    const store = transaction.objectStore(QUIZZES_STORE);
+
+    await new Promise<void>((resolve, reject) => {
+      const request = store.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+
+    db.close();
+  } catch (error) {
+    console.warn("Failed to clear all quiz progress:", error);
+    throw new Error("Failed to clear all quiz progress.");
+  }
+}
+
+// Check if IndexedDB is available
+export function isStorageAvailable(): boolean {
+  try {
+    const test = "__storage_test__";
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Legacy functions for backward compatibility (now unused)
+export function saveQuizState(): void {
+  // Legacy function - no longer used
+}
+
+export function loadQuizState() {
+  // Legacy function - no longer used
+  return null;
+}
+
+export function clearQuizState(): void {
+  // Legacy function - no longer used
+}
+
 export function hasSavedQuizState(): boolean {
-  return loadQuizState() !== null;
+  // Legacy function - no longer used
+  return false;
 }
