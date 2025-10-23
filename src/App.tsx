@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Question } from "./types";
+import type { Question, QuizData } from "./types";
 import { parseQuestionsFromText } from "./utils";
 import { saveQuizState, loadQuizState, clearQuizState } from "./storage";
 import { SetupView } from "./components/SetupView";
@@ -60,10 +60,12 @@ import { ResultsView } from "./components/ResultsView";
 
 export default function QuizPage() {
   const [view, setView] = useState<"setup" | "settings" | "quiz" | "results">("setup");
+  // @ts-ignore - quizData is stored for future use but not currently used
+  const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [originalQuestions, setOriginalQuestions] = useState<Question[]>([]);
-  // @ts-expect-error - quizSettings is stored for future settings but not currently used
-  const [quizSettings, setQuizSettings] = useState<QuizSettings>({ randomOrder: false });
+  // eslint-disable-next-line no-unused-vars
+  const [_quizSettings, setQuizSettings] = useState<QuizSettings>({ randomOrder: false });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | boolean | undefined>>({});
   const [error, setError] = useState<string | null>(null);
@@ -163,8 +165,9 @@ export default function QuizPage() {
     setError(null);
     try {
       const parsed = parseQuestionsFromText(text);
-      setOriginalQuestions(parsed);
-      setQuestions(parsed);
+      setQuizData(parsed);
+      setOriginalQuestions(parsed.questions);
+      setQuestions(parsed.questions);
       setQuizSettings({ randomOrder: false }); // Reset settings when loading new questions
       setView("settings");
       setShowResumePrompt(false);

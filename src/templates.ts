@@ -4,6 +4,12 @@ export function getTemplate(kind: "json" | "yaml") {
   if (kind === "json") {
     return `[
   {
+    "metadata": {
+      "name": "My Quiz Title",
+      "author": "Your Name (optional)"
+    }
+  },
+  {
     "id": "q1",
     "type": "mc",
     "prompt": "<your question here>",
@@ -19,7 +25,10 @@ export function getTemplate(kind: "json" | "yaml") {
   }
 ]`;
   }
-  return `- id: q1
+  return `- metadata:
+  name: "My Quiz Title"
+  author: "Your Name (optional)"
+- id: q1
   type: mc
   prompt: "<your question here>"
   options: ["A", "B", "C", "D"]

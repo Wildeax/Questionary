@@ -44,7 +44,7 @@ export function SetupView({ error, onPasteLoad, onFileSelected: _onFileSelected,
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
           <h2 className="text-xl font-semibold mb-2">Load Questions (JSON or YAML)</h2>
           <p className="text-sm text-neutral-400 mb-4">
-            Paste your document below or upload a .json / .yaml / .yml file. The quiz supports
+            Paste your document below or upload a .json / .yaml / .yml file. Documents must start with metadata containing a required title and optional author. The quiz supports
             <span className="mx-1 font-mono text-neutral-200">mc</span> (multiple choice) and
             <span className="mx-1 font-mono text-neutral-200">tf</span> (true/false) types.
           </p>
@@ -52,7 +52,7 @@ export function SetupView({ error, onPasteLoad, onFileSelected: _onFileSelected,
           <textarea
             className="w-full h-56 bg-neutral-950 border border-neutral-800 rounded-xl p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
             placeholder={
-              `Paste JSON or YAML here...\n\nExample JSON:\n[\n  { "id": "q1", "type": "mc", "prompt": "<your question>", "options": ["A","B","C","D"], "answer": 2 },\n  { "id": "q2", "type": "tf", "prompt": "<your statement>", "answer": true }\n]`
+              `Paste JSON or YAML here...\n\nExample JSON:\n[\n  { "metadata": { "name": "My Quiz", "author": "Optional" } },\n  { "id": "q1", "type": "mc", "prompt": "<your question>", "options": ["A","B","C","D"], "answer": 2 },\n  { "id": "q2", "type": "tf", "prompt": "<your statement>", "answer": true }\n]`
             }
             value={text}
             onChange={(e) => setText(e.target.value)}

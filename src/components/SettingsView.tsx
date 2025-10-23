@@ -2,7 +2,7 @@ import { useState } from "react";
 
 type SettingsProps = {
   questionCount: number;
-  onStartQuiz: (settings: QuizSettings) => void;
+  onStartQuiz: (_settings: QuizSettings) => void;
 };
 
 export type QuizSettings = {

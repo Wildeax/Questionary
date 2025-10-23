@@ -1,5 +1,10 @@
 // -------------------- Types --------------------
 
+export type QuizMetadata = {
+  name: string;
+  author?: string;
+};
+
 export type BaseQuestion = {
   id: string;
   prompt: string;
@@ -18,3 +23,8 @@ export type TFQuestion = BaseQuestion & {
 };
 
 export type Question = MCQuestion | TFQuestion;
+
+export type QuizData = {
+  metadata: QuizMetadata;
+  questions: Question[];
+};

@@ -50,6 +50,14 @@ The application supports two ways to load quiz questions:
 
 ### Question Format
 
+All documents must start with metadata containing the quiz name (required) and optional author:
+
+```yaml
+- metadata:
+  name: "Your Quiz Name"  # Required
+  author: "Your Name"     # Optional
+```
+
 #### Multiple Choice Questions
 ```yaml
 - id: Q001
@@ -71,13 +79,6 @@ The application supports two ways to load quiz questions:
   prompt: "This statement is true."
   answer: true
   explanation: "Optional explanation"
-```
-
-### Quiz Metadata
-```yaml
-- metadata:
-  name: "Unity Senior Certified Exam"
-  author: "Your Name"
 ```
 
 ## 🛠️ Development
