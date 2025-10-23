@@ -41,8 +41,8 @@ export function validateQuizData(raw: any[]): QuizData {
   if (!metadataItem || typeof metadataItem !== "object") {
     errors.push("First item must be metadata object.");
   } else {
-    if (metadataItem.metadata === undefined) {
-      errors.push("First item must be metadata (missing 'metadata' key).");
+    if (!metadataItem.metadata || typeof metadataItem.metadata !== "object") {
+      errors.push("First item must contain a 'metadata' object.");
     } else if (!metadataItem.metadata.name || typeof metadataItem.metadata.name !== "string") {
       errors.push("Metadata must have a required 'name' field (string).");
     }

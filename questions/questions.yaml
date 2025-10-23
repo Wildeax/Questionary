@@ -1,6 +1,6 @@
 - metadata:
-  name: "Unity Senior Certified Exam"
-  author: "Wildeax"
+    name: "Unity Senior Certified Exam"
+    author: "Wildeax"
 
 - id: Q001
   type: mc
@@ -97,7 +97,7 @@
   answer: false
   explanation: "Falso. Los 'Jobs' solo pueden operar sobre tipos 'blittable' (datos nativos) y no pueden acceder a objetos gestionados de C# (reference types) como 'Transform'. Se requeriría un 'TransformAccessArray' para este fin."
 
-  - id: Q011
+- id: Q011
   type: mc
   prompt: "¿Cuál es la diferencia clave entre 'IJob' y 'IJobParallelFor' en el C# Job System?"
   options:
