@@ -1,0 +1,980 @@
+- metadata:
+  name: "Unity Senior Certified Exam"
+  author: "Wildeax"
+
+- id: Q001
+  type: mc
+  prompt: "Estás perfilando un juego y observas picos significativos de 'GC.Alloc' en el Profiler. ¿Cuál de las siguientes NO es una estrategia principal para mitigar la recolección de basura gestionada?"
+  options:
+    - "Usar 'Object Pooling' para GameObjects instanciados frecuentemente."
+    - "Usar 'StringBuilder' para concatenaciones de strings complejas dentro de un bucle 'Update()'."
+    - "Reemplazar 'List<T>' por arrays nativos ('NativeArray<T>') en sistemas que usan el C# Job System."
+    - "Reemplazar bucles 'foreach' por bucles 'for' en todas las colecciones 'List<T>'."
+  answer: 3
+  explanation: "Reemplazar 'foreach' por 'for' en 'List<T>' ya no genera 'garbage' en versiones modernas de C# y Unity. Las otras opciones (Pooling, StringBuilder, y usar Jobs/NativeArray) son estrategias clave de optimización de memoria."
+
+- id: Q002
+  type: mc
+  prompt: "En el contexto de la gestión de dependencias de AssetBundles, ¿cuál es el propósito de un 'AssetBundleManifest'?"
+  options:
+    - "Contiene todos los 'assets' serializados en un solo archivo para cargas más rápidas."
+    - "Define las variantes de 'assets' (por ejemplo, texturas HD vs SD) que debe cargar el 'runtime'."
+    - "Almacena las relaciones de dependencia explícitas (qué bundles debe cargar otro bundle) y los 'hashes' de las versiones."
+    - "Es un script de C# que gestiona la descarga asíncrona de 'assets' desde un CDN."
+  answer: 2
+
+- id: Q003
+  type: mc
+  prompt: "Al implementar un efecto de post-procesado personalizado en URP (Universal Render Pipeline), ¿qué componentes son esenciales para integrarlo con el sistema de 'Volumes'?"
+  options:
+    - "Un 'Compute Shader' y un 'Material' personalizado."
+    - "Una clase que herede de 'ScriptableRenderPass' y un 'RendererFeature'."
+    - "Una clase que herede de 'VolumeComponent' e implemente 'IPostProcessComponent'."
+    - "Un 'ShaderGraph' configurado como 'FullScreen' y un 'CameraData'."
+  answer: 2
+  explanation: "Se necesita un 'VolumeComponent' para almacenar los parámetros en el 'Volume Profile' y un 'IPostProcessComponent' para definir la lógica de renderizado."
+
+- id: Q004
+  type: mc
+  prompt: "En el contexto de DOTS (Data-Oriented Technology Stack), ¿cuál es la función principal de un 'ISystem'?"
+  options:
+    - "Definir el arquetipo (la forma) de una entidad."
+    - "Almacenar los datos de los componentes para un grupo de entidades."
+    - "Ejecutar lógica (comportamiento) que transforma los datos de los componentes."
+    - "Gestionar el ciclo de vida (creación y destrucción) de las entidades."
+  answer: 2
+
+- id: Q005
+  type: mc
+  prompt: "Necesitas realizar 5,000 'raycasts' por 'frame' para un sistema de IA. ¿Cuál es el enfoque más performante en Unity moderno?"
+  options:
+    - "Usar 'Physics.Raycast' dentro de un bucle 'for' en 'Update()'."
+    - "Distribuir los 'raycasts' a lo largo de varios 'frames' usando una 'Coroutine'."
+    - "Usar 'RaycastCommand.ScheduleBatch' para ejecutar los 'raycasts' en 'batch' a través del C# Job System."
+    - "Usar 'Physics.OverlapSphere' como una aproximación para reducir el número de 'raycasts'."
+  answer: 2
+
+- id: Q006
+  type: mc
+  prompt: "En un modelo de multijugador con servidor autoritativo (usando 'Netcode for GameObjects'), ¿dónde debería ejecutarse la lógica de validación de daño y movimiento del jugador?"
+  options:
+    - "En el 'NetworkClient' que inició la acción."
+    - "En el 'NetworkServer' o en el 'Host'."
+    - "En todos los 'NetworkClient' para mantener la sincronización."
+    - "En un 'NetworkVariable' con permisos de escritura para todos."
+  answer: 1
+  explanation: "En un modelo autoritativo, el servidor es la única fuente de verdad y debe validar todas las acciones críticas del juego para prevenir trampas."
+
+- id: Q007
+  type: mc
+  prompt: "¿Cuál es el propósito principal de la clase 'AssetPostprocessor' en el scripting del Editor?"
+  options:
+    - "Crear nuevos tipos de 'assets' personalizados (archivos .asset)."
+    - "Modificar los 'assets' después de que se han guardado en la escena."
+    - "Interceptar la importación de 'assets' (texturas, modelos) para modificar sus 'import settings' o realizar procesamientos previos."
+    - "Gestionar la carga y descarga de 'AssetBundles' en el 'runtime'."
+  answer: 2
+
+- id: Q008
+  type: mc
+  prompt: "En arquitectura de software, ¿cuál es la principal ventaja de usar 'ScriptableObjects' para almacenar datos de configuración (ej. stats de un enemigo) en lugar de un 'MonoBehaviour' en un Prefab?"
+  options:
+    - "'ScriptableObjects' pueden ejecutar lógica de juego usando 'Update()'."
+    - "'ScriptableObjects' son más fáciles de instanciar en tiempo de ejecución usando 'Instantiate()'."
+    - "Permiten desacoplar los datos de la escena, facilitando su reutilización y modificación sin tener que editar Prefabs o escenas."
+    - "Tienen un rendimiento de acceso a memoria significativamente más rápido que los 'MonoBehaviours'."
+  answer: 2
+
+- id: Q009
+  type: tf
+  prompt: "Verdadero o Falso: Usar 'Camera.main' repetidamente dentro de un bucle 'Update()' es una práctica recomendada por su eficiencia, ya que Unity cachea la referencia automáticamente."
+  answer: false
+  explanation: "Falso. 'Camera.main' realiza internamente una llamada a 'FindObjectByTag(\"MainCamera\")', lo cual es costoso. La práctica recomendada es cachear la referencia en 'Awake()' o 'Start()'."
+
+- id: Q010
+  type: tf
+  prompt: "Verdadero o Falso: En el C# Job System, un 'IJob' puede modificar directamente el 'Transform' de un 'GameObject' siempre que no se acceda desde el 'main thread' simultáneamente."
+  answer: false
+  explanation: "Falso. Los 'Jobs' solo pueden operar sobre tipos 'blittable' (datos nativos) y no pueden acceder a objetos gestionados de C# (reference types) como 'Transform'. Se requeriría un 'TransformAccessArray' para este fin."
+
+  - id: Q011
+  type: mc
+  prompt: "¿Cuál es la diferencia clave entre 'IJob' y 'IJobParallelFor' en el C# Job System?"
+  options:
+    - "'IJob' solo puede ejecutarse en el 'main thread', mientras 'IJobParallelFor' se ejecuta en 'worker threads'."
+    - "'IJob' ejecuta una sola tarea, mientras 'IJobParallelFor' ejecuta la misma tarea sobre múltiples elementos de datos en paralelo."
+    - "'IJobParallelFor' no puede acceder a 'NativeArray', mientras 'IJob' sí puede."
+    - "'IJob' es para físicas y 'IJobParallelFor' es para 'pathfinding'."
+  answer: 1
+  explanation: "'IJob' es para un solo 'trabajo', mientras 'IJobParallelFor' divide un bucle 'for' para procesar datos (como en un 'NativeArray') a través de múltiples hilos."
+
+- id: Q012
+  type: mc
+  prompt: "Estás escribiendo un shader y necesitas que se comporte de manera diferente si la palabra clave '_FANCY_EFFECT_ON' está habilitada en el material. ¿Qué directiva de 'pragma' usarías?"
+  options:
+    - "#pragma shader_feature _FANCY_EFFECT_ON"
+    - "#pragma multi_compile _FANCY_EFFECT_ON"
+    - "#pragma keyword _FANCY_EFFECT_ON"
+    - "#pragma variant _FANCY_EFFECT_ON"
+  answer: 0
+  explanation: "'shader_feature' se usa para palabras clave habilitadas/deshabilitadas desde el material. 'multi_compile' se usa para variantes que el código C# habilita globalmente (ej. 'Shader.EnableKeyword')."
+
+- id: Q013
+  type: tf
+  prompt: "Verdadero o Falso: En el sistema de Addressables, 'LoadAssetAsync' carga un 'asset' en memoria, pero 'InstantiateAsync' lo carga Y además crea una instancia en la escena (si es un GameObject)."
+  answer: true
+  explanation: "'LoadAssetAsync' es para obtener la referencia (ej. un 'ScriptableObject' o un Prefab), mientras 'InstantiateAsync' maneja la carga y la instanciación en un solo paso, gestionando el conteo de referencias."
+
+- id: Q014
+  type: mc
+  prompt: "En 'Editor Scripting', ¿cuándo usarías un 'PropertyDrawer' en lugar de un 'CustomEditor'?"
+  options:
+    - "Para cambiar cómo se ve *todo* el componente 'Inspector' de un 'MonoBehaviour'."
+    - "Para definir cómo se dibuja en el 'Inspector' un tipo de dato personalizado (una clase o 'struct' con '[System.Serializable]') cuando se usa como variable pública."
+    - "Para añadir nuevos botones a la barra de herramientas principal de Unity."
+    - "Para crear una ventana de Editor completamente nueva (como el 'Profiler')."
+  answer: 1
+  explanation: "'CustomEditor' es para un componente entero (ej. 'MyScriptEditor' para 'MyScript'). 'PropertyDrawer' es para una *propiedad* (ej. 'MyCustomClassDrawer' para 'MyCustomClass')."
+
+- id: Q015
+  type: mc
+  prompt: "En el Profiler, observas que 'Gfx.WaitForPresent' (o 'Present.Wait') consume una gran cantidad de tiempo en el 'main thread'. ¿Qué indica esto?"
+  options:
+    - "El juego está 'CPU-bound' (la CPU está trabajando demasiado y la GPU está esperando)."
+    - "El juego está 'GPU-bound' (la GPU está tardando demasiado en renderizar y la CPU está esperando que termine)."
+    - "Hay demasiadas llamadas a 'Debug.Log'."
+    - "La recolección de basura (GC) se está ejecutando en cada 'frame'."
+  answer: 1
+  explanation: "'Gfx.WaitForPresent' significa que el 'main thread' (CPU) ha terminado su trabajo y está esperando a que la GPU complete el renderizado del 'frame' anterior."
+
+- id: Q016
+  type: tf
+  prompt: "Verdadero o Falso: En DOTS (ECS), un 'struct' que implementa 'IComponentData' no debe contener métodos ni propiedades, solo campos de tipos 'blittable'."
+  answer: true
+  explanation: "Los 'IComponentData' son para los datos puros (el 'qué'). La lógica (el 'cómo') debe residir en los 'ISystem'. Deben ser 'blittable' para funcionar eficientemente con los 'Jobs' y la memoria nativa."
+
+- id: Q017
+  type: mc
+  prompt: "¿Cuál es el propósito principal de un 'ScriptableRenderPass' en el Universal Render Pipeline (URP)?"
+  options:
+    - "Almacenar datos de configuración de post-procesado."
+    - "Definir un conjunto de operaciones de renderizado (ej. dibujar 'skybox', dibujar objetos opacos) que pueden ser inyectadas en el 'pipeline'."
+    - "Reemplazar completamente el sistema de 'Materials' de Unity."
+    - "Optimizar la carga de texturas en tiempo de ejecución."
+  answer: 1
+  explanation: "Un 'RendererFeature' añade uno o más 'ScriptableRenderPass' al 'pipeline', permitiendo inyectar lógica de renderizado personalizada (como un 'outline') en puntos específicos."
+
+- id: Q018
+  type: mc
+  prompt: "¿Por qué es crucial manipular un 'Rigidbody' (ej. usando 'AddForce' o moviendo 'rigidbody.position') dentro de 'FixedUpdate()' en lugar de 'Update()'?"
+  options:
+    - "'Update()' no puede acceder a los componentes 'Rigidbody'."
+    - "'FixedUpdate()' se ejecuta con menos frecuencia, ahorrando rendimiento."
+    - "'FixedUpdate()' se sincroniza con el 'timestep' del motor de físicas, asegurando interacciones de físicas estables y consistentes."
+    - "Solo 'FixedUpdate()' puede detectar colisiones."
+  answer: 2
+  explanation: "Las físicas se calculan en pasos de tiempo fijos ('Fixed Timestep'). 'FixedUpdate()' se alinea con esos pasos. Usar 'Update()' (que depende del 'framerate') puede causar resultados erráticos o inconsistentes."
+
+- id: Q019
+  type: tf
+  prompt: "Verdadero o Falso: En 'netcode', la 'Predicción del Lado del Cliente' (Client-Side Prediction) es una técnica donde el cliente predice el resultado de sus propias acciones (ej. moverse) inmediatamente, sin esperar la confirmación del servidor, para ocultar la latencia."
+  answer: true
+  explanation: "Esto proporciona una sensación de respuesta inmediata. El cliente se mueve, y si el servidor luego lo corrige (reconciliación), el cliente se ajusta a la posición autoritativa del servidor."
+
+- id: Q020
+  type: mc
+  prompt: "¿Qué herramienta de Unity se utiliza para aplicar efectos (como 'reverb' o 'pitch shift') a grupos de fuentes de audio y crear 'snapshots' de diferentes estados de mezcla (ej. 'Juego Pausado', 'Bajo el agua')?"
+  options:
+    - "El componente 'AudioListener'."
+    - "El 'AudioMixer'."
+    - "El componente 'AudioSource' (sección de efectos)."
+    - "Un 'ScriptableObject' de audio."
+  answer: 1
+  explanation: "El 'AudioMixer' permite enrutar 'AudioSources' a 'Groups', aplicar efectos a esos grupos y hacer 'snapshots' para transicionar entre diferentes estados de la mezcla."
+
+- id: Q021
+  type: mc
+  prompt: "Al crear una ventana de editor personalizada ('EditorWindow'), ¿qué método se usa para dibujar los controles GUI que responden a eventos (como clics) y se actualizan constantemente?"
+  options:
+    - "OnInspectorGUI()"
+    - "OnSceneGUI()"
+    - "OnGUI()"
+    - "Awake()"
+  answer: 2
+  explanation: "'OnGUI()' se llama múltiples veces por frame para dibujar y manejar eventos de GUI en un 'EditorWindow'. 'OnInspectorGUI()' es para 'CustomEditors' (inspectores)."
+
+- id: Q022
+  type: mc
+  prompt: "¿Cuál es el requisito principal para que el 'SRP Batcher' (en URP/HDRP) funcione eficientemente y agrupe 'draw calls'?"
+  options:
+    - "Todos los objetos deben usar el mismo 'Material' y la misma textura."
+    - "Todos los objetos deben ser estáticos ('Static')."
+    - "Los objetos deben usar 'Materials' que usen el mismo 'Shader', y sus propiedades deben estar en bloques de material (CBuffer) compatibles con SRP."
+    - "Los objetos deben estar en la misma capa ('Layer')."
+  answer: 2
+  explanation: "El SRP Batcher agrupa 'draw calls' si los 'Materials' usan el mismo 'Shader Variant'. Reorganiza los datos de CBuffer, permitiendo usar diferentes 'Materials' (con diferentes propiedades) siempre que el 'Shader' sea compatible."
+
+- id: Q023
+  type: tf
+  prompt: "Verdadero o Falso: 'Occlusion Culling' es una técnica que descarta el renderizado de objetos que están fuera del frustum de la cámara (fuera de la vista)."
+  answer: false
+  explanation: "Falso. Eso es 'Frustum Culling'. 'Occlusion Culling' descarta objetos que *están* en el frustum, pero están completamente *ocultos* por otros objetos más cercanos (ej. un enemigo detrás de un muro)."
+
+- id: Q024
+  type: mc
+  prompt: "¿Cuál es el propósito del 'LOD Group' (Level of Detail)?"
+  options:
+    - "Agrupar objetos para 'Occlusion Culling'."
+    - "Combinar las mallas de múltiples objetos en una sola ('Mesh Combining')."
+    - "Intercambiar un modelo por una versión de menor poligonaje (o un 'billboard') a medida que se aleja de la cámara, para mejorar el rendimiento."
+    - "Aplicar físicas solo cuando el objeto está cerca de la cámara."
+  answer: 2
+
+- id: Q025
+  type: mc
+  prompt: "En un 'Animator Controller', ¿cuál es la función de una capa ('Layer') con su 'Blending' configurado en 'Additive' y un 'Weight' de 1?"
+  options:
+    - "Reemplazar completamente la animación de la capa base."
+    - "Añadir (sumar) la animación de esta capa sobre la capa base (ej. una animación de 'disparar' sobre la de 'caminar')."
+    - "Ignorar la capa base y solo reproducir esta capa."
+    - "Reproducir la animación solo si la capa base ha terminado."
+  answer: 1
+  explanation: "El modo 'Additive' suma las transformaciones de la animación (a menudo usado para efectos secundarios como respiración o retroceso) sobre el resultado de la capa anterior (base)."
+
+- id: Q026
+  type: mc
+  prompt: "¿Qué hace la opción 'Apply Root Motion' en un componente 'Animator'?"
+  options:
+    - "Aplica el movimiento de la cápsula de colisión al 'Transform' del personaje."
+    - "Aplica el desplazamiento (movimiento y rotación) definido en el archivo de animación (ej. un ciclo de caminar que avanza) al 'Transform' del 'GameObject'."
+    - "Impide que el 'GameObject' se mueva, forzando a la animación a ejecutarse en el sitio ('in-place')."
+    - "Activa el sistema de 'Inverse Kinematics' (IK)."
+  answer: 1
+  explanation: "Permite que la animación controle el movimiento del 'Transform' raíz, lo cual es útil para un movimiento más realista, en lugar de que el 'script' mueva el 'Transform' y la animación solo mueva los huesos."
+
+- id: Q027
+  type: tf
+  prompt: "Verdadero o Falso: Un 'Compute Shader' se ejecuta en la CPU y está diseñado para tareas de cómputo paralelas complejas, como la IA."
+  answer: false
+  explanation: "Falso. Un 'Compute Shader' se ejecuta en la GPU (Graphics Processing Unit), aprovechando su arquitectura masivamente paralela para tareas de cómputo (GPGPU), como físicas de partículas, 'culling' o procesamiento de imágenes."
+
+- id: Q028
+  type: mc
+  prompt: "En 'Addressables', ¿cuál es la función principal de los 'Remote Catalogs' (Catálogos Remotos)?"
+  options:
+    - "Forzar al jugador a descargar todos los 'assets' antes de iniciar el juego."
+    - "Permitir que el juego actualice o añada contenido (assets/bundles) después de que el juego ha sido lanzado (publicado), sin necesidad de lanzar un nuevo 'build' (ej. para DLCs o parches de 'assets')."
+    - "Almacenar los 'assets' en el disco duro local en lugar de en la memoria RAM."
+    - "Mejorar la compresión de los 'AssetBundles' usando un servidor."
+  answer: 1
+  explanation: "El catálogo remoto (un archivo .json y .hash) se aloja en un servidor. El juego lo comprueba al inicio, y si ha cambiado, puede descargar los 'AssetBundles' nuevos o actualizados que ese catálogo referencia."
+
+- id: Q029
+  type: mc
+  prompt: "Estás creando un 'ScriptableObject' para que actúe como un 'canal' de eventos (un patrón 'Event Channel'). ¿Cómo notificarías a otros 'scripts' que se han suscrito a este evento?"
+  options:
+    - "Usando 'GameObject.Find' para localizar a todos los 'listeners' y llamar a sus métodos."
+    - "Invocando un 'C# event' (ej. 'public event Action OnEventRaised;') definido dentro del 'ScriptableObject'."
+    - "Usando 'SendMessage(\"OnEventRaised\")' desde el 'ScriptableObject'."
+    - "Haciendo que el 'ScriptableObject' herede de 'MonoBehaviour' para usar 'Update()'."
+  answer: 1
+  explanation: "El patrón 'Event Channel' usa un 'ScriptableObject' como intermediario. Los 'Listeners' se suscriben al 'event' de C# del 'ScriptableObject', y los 'Raisers' (emisores) llaman a un método en el 'ScriptableObject' que invoca ese 'event'."
+
+- id: Q030
+  type: tf
+  prompt: "Verdadero o Falso: El 'Garbage Collector' (GC) de C# en Unity puede detener el 'main thread' (hilo principal) para ejecutarse, causando un 'pico' (stutter) en el 'framerate'."
+  answer: true
+  explanation: "Verdadero. Esto se conoce como 'Stop-The-World'. Aunque el GC incremental (disponible en versiones modernas) mitiga esto, las grandes alocaciones de memoria gestionada (managed memory) aún pueden forzar al GC a detener la ejecución para limpiar la memoria."
+
+- id: Q031
+  type: mc
+  prompt: "¿Cuál es una limitación clave de usar 'async/await' (Task) en un MonoBehaviour en comparación con una Coroutine?"
+  options:
+    - "No pueden ejecutarse en el hilo principal (main thread)."
+    - "Generan significativamente más 'garbage' (GC Alloc) que las Coroutines."
+    - "Una 'Task' no se detiene automáticamente si el 'GameObject' que la inició es destruido, lo que puede causar excepciones de referencia nula."
+    - "No pueden usarse para operaciones de 'UnityWebRequest'."
+  answer: 2
+  explanation: "Las Coroutines están ligadas al ciclo de vida del MonoBehaviour y se detienen con 'OnDestroy'. Las 'Tasks' no, y continuarán ejecutándose, requiriendo un 'CancellationToken' manual para detenerlas."
+
+- id: Q032
+  type: mc
+  prompt: "Tienes un Canvas de UGUI con 1000 elementos estáticos (fondo, botones) y 10 elementos dinámicos (un minimapa) que se actualizan cada frame. El Profiler muestra un alto costo en 'Canvas.SendWillRenderCanvases'. ¿Cuál es la optimización principal?"
+  options:
+    - "Combinar todas las texturas de la UI en un solo 'Sprite Atlas'."
+    - "Poner los 10 elementos dinámicos en su propio componente 'Canvas' (un sub-canvas) separado del Canvas estático."
+    - "Desactivar 'Raycast Target' en todos los elementos estáticos."
+    - "Usar 'Text Mesh Pro' en lugar de 'UI Text'."
+  answer: 1
+  explanation: "Al separar los elementos dinámicos en su propio Canvas, solo ese pequeño canvas se 'ensucia' (dirty) y necesita reconstruirse (Rebuild), en lugar de forzar la reconstrucción de todo el canvas de 1000 elementos."
+
+- id: Q033
+  type: mc
+  prompt: "¿Qué interfaz de C# implementarías para ejecutar un script que verifique la configuración del proyecto (ej. 'build settings') justo antes de que el proceso de 'Build' comience?"
+  options:
+    - "IPreprocessBuildWithReport"
+    - "AssetPostprocessor"
+    - "ISerializationCallbackReceiver"
+    - "EditorWindow"
+  answer: 0
+  explanation: "'IPreprocessBuildWithReport' (y su 'callback' 'OnPreprocessBuild') es el 'hook' moderno de Unity diseñado específicamente para ejecutar código antes de que comience la compilación."
+
+- id: Q034
+  type: mc
+  prompt: "En el contexto de 'shaders' y 'pipelines' de renderizado, ¿para qué se utiliza comúnmente el 'Stencil Buffer'?"
+  options:
+    - "Para almacenar datos de 'depth' (profundidad) y evitar 'overdraw'."
+    - "Para crear efectos de 'Alpha Blending' (transparencia)."
+    - "Para 'enmascarar' píxeles (ej. un portal, o evitar que un objeto se dibuje sobre la UI), escribiendo un valor en el 'buffer' y luego probando contra él."
+    - "Para almacenar los 'lightmaps' de la escena."
+  answer: 2
+  explanation: "El 'Stencil Buffer' permite operaciones de enmascaramiento por píxel, descartando píxeles basados en un valor de referencia, lo cual es útil para portales, 'decals' complejos o 'outlines'."
+
+- id: Q035
+  type: tf
+  prompt: "Verdadero o Falso: Después de cargar un 'asset' con 'Addressables.LoadAssetAsync', es suficiente con llamar a 'GameObject.Destroy()' sobre la instancia para liberar toda la memoria asociada (incluyendo el 'AssetBundle' y sus dependencias)."
+  answer: false
+  explanation: "Falso. 'Destroy()' libera la instancia, pero debes llamar a 'Addressables.Release()' (pasando el 'handle' o la instancia) para decrementar el contador de referencias del 'asset' y permitir que Addressables descargue el 'AssetBundle' de la memoria."
+
+- id: Q036
+  type: mc
+  prompt: "En un 'ISystem' de DOTS (ECS) que se ejecuta como un 'Job', ¿cómo crearías o destruirías una entidad de forma segura para los 'threads' (thread-safe)?"
+  options:
+    - "Usando 'EntityManager.CreateEntity()' directamente dentro del 'Job'."
+    - "Almacenando las acciones en una 'NativeList' y procesándolas en el 'main thread' después."
+    - "Usando un 'EntityCommandBuffer' (obtenido de un 'BeginSimulationEntityCommandBufferSystem' o similar)."
+    - "No es posible; los 'Jobs' no pueden crear ni destruir entidades."
+  answer: 2
+  explanation: "El 'EntityCommandBuffer' (ECB) 'graba' los comandos (crear, destruir, 'AddComponent') de forma 'thread-safe' y los 'reproduce' (ejecuta) más tarde en el 'main thread' en un punto de sincronización."
+
+- id: Q037
+  type: mc
+  prompt: "¿Cuál es el principal beneficio de usar un 'framework' de Inyección de Dependencias (DI) (como Zenject o VContainer) en un proyecto grande de Unity?"
+  options:
+    - "Mejora el rendimiento de las físicas."
+    - "Reduce el tamaño final del 'build'."
+    - "Desacopla las clases, haciendo que las dependencias (ej. 'PlayerManager', 'SoundService') sean explícitas y fáciles de 'mockear' (simular) para 'unit testing'."
+    - "Reemplaza la necesidad de usar 'ScriptableObjects'."
+  answer: 2
+  explanation: "DI (Inyección de Dependencias) es un patrón de Inversión de Control (IoC) que gestiona la creación e 'inyección' de dependencias, lo que reduce el acoplamiento (evita 'GameObject.Find' o Singletons estáticos) y mejora la testeabilidad."
+
+- id: Q038
+  type: mc
+  prompt: "¿Dónde configurarías en el editor que los 'GameObjects' en la capa 'Player' NO colisionen con los 'GameObjects' en la capa 'PlayerProjectile'?"
+  options:
+    - "En el 'Physics Material' de los proyectiles."
+    - "En el 'Layer Collision Matrix' (Matriz de Colisión de Capas) dentro de 'Project Settings > Physics'."
+    - "En el 'Tag Manager'."
+    - "Usando 'Physics.IgnoreCollision()' en el 'Start()' de cada proyectil."
+  answer: 1
+  explanation: "La 'Layer Collision Matrix' es la forma global y más eficiente de definir qué capas pueden interactuar (colisionar) con qué otras capas, optimizando el motor de físicas."
+
+- id: Q039
+  type: mc
+  prompt: "Quieres que Unity importe un archivo con una extensión personalizada (ej. '.mydata') y lo convierta automáticamente en un 'ScriptableObject' dentro del 'Asset Database'. ¿Qué clase de 'Editor Scripting' deberías usar?"
+  options:
+    - "ScriptedImporter"
+    - "AssetPostprocessor"
+    - "CustomEditor"
+    - "UnityEditor.AssetDatabase"
+  answer: 0
+  explanation: "'ScriptedImporter' (marcado con el atributo '[ScriptedImporter]') es la herramienta moderna diseñada exactamente para esto: definir un 'pipeline' de importación personalizado para tipos de archivo específicos."
+
+- id: Q040
+  type: tf
+  prompt: "Verdadero o Falso: Reemplazar una 'class' que solo contiene 3 'floats' por un 'struct' puede mejorar el rendimiento y reducir la presión sobre el 'Garbage Collector' (GC) porque los 'structs' son 'value types' y (generalmente) se alocan en el 'stack' o 'inline' en el objeto contenedor."
+  answer: true
+  explanation: "Verdadero. Los 'structs' (tipos de valor) evitan la alocación de memoria en el 'heap' gestionado (a menos que sean 'boxed'), reduciendo la cantidad de 'basura' que el GC debe limpiar. Las 'classes' (tipos de referencia) siempre se alocan en el 'heap'."
+
+- id: Q041
+  type: mc
+  prompt: "Necesitas serializar un 'Dictionary<string, int>' en un MonoBehaviour, pero Unity no lo soporta nativamente. ¿Qué interfaz implementarías para 'aplanar' el diccionario en dos 'List<T>' antes de la serialización y 'reconstruirlo' después?"
+  options:
+    - "ISerializationCallbackReceiver"
+    - "IDictionarySerializer"
+    - "IPreprocessBuildWithReport"
+    - "INotifyPropertyChanged"
+  answer: 0
+  explanation: "'OnBeforeSerialize' y 'OnAfterDeserialize' (de ISerializationCallbackReceiver) te permiten convertir tipos no serializables (como Dictionary) a tipos serializables (como dos Listas)."
+
+- id: Q042
+  type: mc
+  prompt: "¿Cuál es la principal ventaja de usar 'GPU Instancing' (Instanciado de GPU)?"
+  options:
+    - "Combina mallas ('meshes') en una sola antes de compilar el juego."
+    - "Permite dibujar miles de copias de la *misma malla* con el *miso material* en una sola 'draw call', pero permitiendo variaciones por instancia (ej. color, posición) vía 'MaterialPropertyBlock'."
+    - "Reduce el 'overdraw' de la GPU al no dibujar píxeles ocultos."
+    - "Reemplaza el 'SRP Batcher' en URP y HDRP."
+  answer: 1
+  explanation: "Es ideal para vegetación o ejércitos. Dibuja la misma malla muchas veces de forma muy eficiente, a diferencia del SRP Batcher que agrupa diferentes mallas/materiales que usan el mismo shader."
+
+- id: Q043
+  type: tf
+  prompt: "Verdadero o Falso: El método 'OnSceneGUI()' en un 'CustomEditor' se utiliza para dibujar 'handles' interactivos (como 'Handles.PositionHandle') y otra UI directamente en la 'Scene View'."
+  answer: true
+  explanation: "Verdiero. 'OnInspectorGUI()' es para el 'Inspector', 'OnGUI()' es para 'EditorWindow', y 'OnSceneGUI()' es para dibujar en la 'Scene View'."
+
+- id: Q044
+  type: mc
+  prompt: "¿Cuál es el propósito principal del paquete 'Animation Rigging'?"
+  options:
+    - "Reemplazar completamente el sistema 'Animator' y 'Mecanim'."
+    - "Crear 'shaders' de animación complejos en 'ShaderGraph'."
+    - "Proporcionar un conjunto de 'constraints' (restricciones) de 'runtime' para modificar proceduralmente una animación esquelética (ej. 'Two-Bone IK' para pies, 'Multi-Aim' para apuntar)."
+    - "Optimizar la compresión de 'AnimationClips'."
+  answer: 2
+  explanation: "Permite aplicar 'rigs' procedurales (como IK, apuntado, 'damping') en tiempo de ejecución, además de las animaciones base."
+
+- id: Q045
+  type: mc
+  prompt: "En un 'MeshCollider', ¿cuál es la principal limitación de usar una malla no-'Convex' (Non-Convex)?"
+  options:
+    - "No puede colisionar con otros 'MeshColliders' no-'Convex'."
+    - "El 'Rigidbody' al que está asociado debe ser 'Kinematic'. No puede ser un 'Rigidbody' dinámico (no-kinematic)."
+    - "No puede detectar colisiones, solo 'triggers'."
+    - "Requiere que la malla tenga menos de 256 vértices."
+  answer: 1
+  explanation: "Los 'MeshColliders' cóncavos (no-convex) son estáticos por diseño en el motor de físicas. Para que un 'Rigidbody' se mueva y tenga un 'MeshCollider', ese 'MeshCollider' *debe* estar marcado como 'Convex'."
+
+- id: Q046
+  type: mc
+  prompt: "¿Qué hace el atributo '[BurstCompile]' cuando se aplica a un 'struct' que implementa 'IJob'?"
+  options:
+    - "Garantiza que el 'Job' se ejecute en el 'main thread'."
+    - "Permite al 'Job' acceder a 'GameObjects' y 'MonoBehaviours'."
+    - "Traduce el código C# del 'Job' a código de máquina nativo altamente optimizado (usando LLVM), saltándose la VM de C# para un rendimiento mucho mayor."
+    - "Comprime los datos de 'NativeArray' antes de pasarlos al 'Job'."
+  answer: 2
+  explanation: "Burst es un compilador 'ahead-of-time' (AOT) que convierte un subconjunto específico de C# (usado en Jobs) en código nativo de alto rendimiento, optimizado para la plataforma de destino."
+
+- id: Q047
+  type: mc
+  prompt: "En desarrollo de UI (UGUI), ¿cuál es el beneficio de rendimiento *principal* de agrupar múltiples 'Sprites' en un 'Sprite Atlas'?"
+  options:
+    - "Reduce el tamaño total de los archivos de textura en el 'build' final."
+    - "Reduce las 'draw calls' (llamadas de dibujado) al permitir que la GPU dibuje múltiples 'Sprites' que comparten el mismo 'Material' (la textura del atlas) en un solo 'batch'."
+    - "Mejora la calidad visual de los 'Sprites' al usar 'mipmaps' compartidos."
+    - "Permite que los 'Sprites' se animen más rápido."
+  answer: 1
+  explanation: "Agrupar texturas en un atlas (texture packing) es una técnica fundamental de 'batching' de 'sprites'. Menos cambios de material (textura) = menos 'draw calls' = mejor rendimiento."
+
+- id: Q048
+  type: tf
+  prompt: "Verdadero o Falso: Un 'script' de editor que usa el atributo '[InitializeOnLoad]' ejecutará su constructor estático tan pronto como el editor de Unity se abra o el 'script' termine de compilarse."
+  answer: true
+  explanation: "Verdadero. Es el 'hook' principal para inicializar código del editor (ej. registrar 'callbacks', configurar 'settings') cuando el editor se carga, sin requerir una acción manual del usuario."
+
+- id: Q049
+  type: mc
+  prompt: "En un 'shader', ¿qué significa la instrucción 'ZTest LEqual'?"
+  options:
+    - "El píxel solo se dibujará si su valor de profundidad ('Z') es *menor o igual* al valor de profundidad ya existente en el 'Z-buffer' (Depth Buffer)."
+    - "El píxel siempre se dibujará, ignorando la profundidad ('ZTest Always')."
+    - "El píxel solo se dibujará si es exactamente *igual* al valor de profundidad."
+    - "El píxel solo se dibujará si es *mayor* que el valor de profundidad (ej. para efectos 'detrás de muros')."
+  answer: 0
+  explanation: "'LEqual' (Less or Equal) es la prueba de profundidad estándar. Asegura que los objetos más cercanos se dibujen sobre los objetos más lejanos."
+
+- id: Q050
+  type: mc
+  prompt: "En 'networking' de juegos, ¿cuál es la diferencia entre 'State Synchronization' (Sincronización de Estado) y un 'Remote Procedure Call' (RPC)?"
+  options:
+    - "Los 'RPCs' son solo para el 'Host', mientras que el 'State Sync' es para los 'Clients'."
+    - "'State Sync' (ej. 'NetworkVariable') replica continuamente el valor de una variable, asegurando que sea el mismo en todos los clientes. Un 'RPC' es un evento de una sola vez (ej. 'DispararArma') enviado a clientes/servidor."
+    - "'State Sync' es más rápido pero menos fiable que los 'RPCs'."
+    - "Los 'RPCs' solo pueden enviar 'strings', mientras 'State Sync' puede enviar 'floats' e 'ints'."
+  answer: 1
+  explanation: "Usa 'State Sync' (NetworkVariable) para cosas que *son* (posición, vida). Usa 'RPC' para cosas que *suceden* (lanzar hechizo, recibir daño, chatear)."
+
+- id: Q051
+  type: mc
+  prompt: "¿Cuál es el propósito del 'Assembly Definition File' (.asmdef) en un proyecto de Unity?"
+  options:
+    - "Define 'namespaces' personalizados para los 'scripts'."
+    - "Divide la base de código C# en ensamblados (assemblies) separados, reduciendo drásticamente los tiempos de compilación de 'scripts' cuando se modifica el código."
+    - "Se usa para configurar la compilación 'Burst'."
+    - "Almacena la configuración de 'Addressables'."
+  answer: 1
+  explanation: "Al crear ensamblados, Unity solo recompila los ensamblados que cambiaron y aquellos que dependen de él, en lugar de recompilar *todo* el proyecto por cada cambio."
+
+- id: Q052
+  type: mc
+  prompt: "En URP (Universal Render Pipeline), ¿qué hace un 'Renderer Feature'?"
+  options:
+    - "Define un nuevo tipo de 'Material' que se puede usar en la escena."
+    - "Contiene la lógica para añadir uno o más 'ScriptableRenderPass' al 'pipeline' (ej. para un 'outline', 'blur', o renderizado 'custom')."
+    - "Optimiza la resolución de la pantalla en dispositivos móviles."
+    - "Es el 'asset' que almacena la configuración de calidad (Bajo, Medio, Alto) del 'pipeline'."
+  answer: 1
+  explanation: "El 'Renderer Feature' es el 'asset' que se añade al 'URP Renderer Data', y es el punto de entrada para inyectar pases de renderizado personalizados."
+
+- id: Q053
+  type: tf
+  prompt: "Verdadero o Falso: Usar 'LINQ' (ej. .Where(), .OrderBy()) en un 'Update()' es una buena práctica porque simplifica el código sin afectar el rendimiento ni generar 'garbage'."
+  answer: false
+  explanation: "Falso. La mayoría de las operaciones de LINQ alocan memoria en el 'heap' (generan 'garbage') y son significativamente más lentas que un bucle 'for' o 'foreach' estándar, por lo que deben evitarse en código que se ejecuta en cada 'frame'."
+
+- id: Q054
+  type: mc
+  prompt: "¿Cuál es el propósito del patrón 'Singleton' en el desarrollo de juegos?"
+  options:
+    - "Garantizar que solo exista *una* instancia de una clase (ej. 'GameManager', 'AudioManager') y proporcionar un punto de acceso global estático a ella."
+    - "Dividir un 'GameObject' en múltiples componentes más pequeños."
+    - "Optimizar la memoria alocando todos los objetos en el 'stack'."
+    - "Un patrón de 'networking' para sincronizar un solo 'GameObject'."
+  answer: 0
+  explanation: "Aunque debe usarse con moderación, es un patrón común para sistemas de gestión que necesitan ser accesibles desde cualquier parte del código (ej. 'AudioManager.Instance.PlaySound()')."
+
+- id: Q055
+  type: mc
+  prompt: "En el Profiler de Memoria (Memory Profiler), ves una gran cantidad de memoria en 'Assets > Textures'. ¿Qué ajuste de importación de textura reduciría más drásticamente su uso de memoria en el 'runtime'?"
+  options:
+    - "Cambiar el 'Filter Mode' a 'Trilinear'."
+    - "Activar 'Read/Write Enabled'."
+    - "Reducir el 'Max Size' (Tamaño Máximo) y activar 'Use Crunch Compression'."
+    - "Desactivar 'Generate Mip Maps'."
+  answer: 2
+  explanation: "Reducir el 'Max Size' (resolución) tiene el mayor impacto (reducir a la mitad la resolución reduce la memoria a 1/4). 'Crunch Compression' ofrece una alta compresión en disco y GPU."
+
+- id: Q056
+  type: tf
+  prompt: "Verdadero o Falso: En el C# Job System, un 'NativeArray<T>' debe ser explícitamente 'Disposed' (liberado) cuando ya no se necesita, o causará un 'memory leak' (fuga de memoria)."
+  answer: true
+  explanation: "Verdadero. Los 'NativeContainers' (como NativeArray) alocan memoria nativa (no gestionada por el GC). Es responsabilidad del programador liberarla usando '.Dispose()', generalmente con un 'Allocator' temporal o persistente."
+
+- id: Q057
+  type: mc
+  prompt: "Si quieres que un 'GameObject' (ej. un 'trigger' de audio) sea destruido después de 5 segundos, ¿cuál es la forma más simple y nativa de hacerlo sin usar 'Update()' o una 'Coroutine'?"
+  options:
+    - "Usar 'Destroy(gameObject, 5.0f)'."
+    - "Usar 'Invoke(\"DestroySelf\", 5.0f)' donde 'DestroySelf' llama a 'Destroy(gameObject)'."
+    - "Crear un 'Task.Delay(5000)' y luego llamar a 'Destroy(gameObject)'."
+    - "Ambas A y B son formas válidas y comunes de lograr esto."
+  answer: 3
+  explanation: "Ambas 'Destroy(gameObject, 5.0f)' y 'Invoke(\"MethodName\", 5.0f)' son métodos heredados de MonoBehaviour diseñados para retrasar ejecuciones sin necesidad de Coroutines."
+
+- id: Q058
+  type: mc
+  prompt: "¿Qué hace la técnica de 'Light Probes' (Sondas de Luz)?"
+  options:
+    - "Proyecta sombras dinámicas desde 'GameObjects' en movimiento."
+    - "Captura la iluminación 'baked' (calculada) en puntos específicos del espacio, permitiendo que los objetos dinámicos (no-estáticos) reciban esa iluminación rebotada de forma realista."
+    - "Reemplaza los 'Skyboxes' por un sistema de iluminación volumétrica."
+    - "Es un tipo de 'shader' usado para efectos de 'bloom'."
+  answer: 1
+  explanation: "Las 'Light Probes' almacenan la iluminación de la escena. Los objetos dinámicos interpolan la luz de las sondas más cercanas para integrarse con la iluminación estática ('baked') de la escena."
+
+- id: Q059
+  type: mc
+  prompt: "En DOTS, ¿qué es un 'Archetype' (Arquetipo)?"
+  options:
+    - "Un 'prefab' de una entidad."
+    - "Un 'ISystem' que solo afecta a un tipo de entidad."
+    - "La definición estructural única de una entidad, basada en la combinación específica de tipos de 'ComponentData' que posee."
+    - "Un 'buffer' para almacenar comandos de entidades."
+  answer: 2
+  explanation: "Todas las entidades que tienen exactamente la misma composición (ej. 'Position', 'Rotation', 'Velocity') pertenecen al mismo 'Archetype'. ECS organiza la memoria en 'chunks' basados en arquetipos."
+
+- id: Q060
+  type: tf
+  prompt: "Verdadero o Falso: El 'Draw Call Batching' estático (Static Batching) requiere más uso de memoria (CPU) que el 'batching' dinámico, pero puede manejar un mayor número de vértices por 'batch'."
+  answer: true
+  explanation: "Verdadero. El 'Static Batching' combina las mallas de los objetos estáticos marcados en un gran 'buffer' de vértices en tiempo de 'build' (o carga), lo que consume más memoria pero ahorra mucho trabajo de CPU en el 'runtime' al reducir las 'draw calls'."
+  
+- id: Q061
+  type: mc
+  prompt: "En un 'CustomEditor', ¿por qué es preferible usar 'SerializedObject' y 'SerializedProperty' en lugar de acceder directamente a las variables del '(MyScript)target'?"
+  options:
+    - "Porque 'SerializedObject' es más rápido en tiempo de ejecución."
+    - "Es la única forma de modificar variables privadas ('private') desde el editor."
+    - "Maneja automáticamente el 'Undo/Redo', el 'multi-object editing' (editar varios objetos a la vez) y marca la escena/asset como 'dirty' (modificado)."
+    - "Permite usar 'async/await' dentro del 'OnInspectorGUI'."
+  answer: 2
+  explanation: "Modificar 'target.myVar' directamente no registra el cambio para 'Undo' y no funciona si tienes varios objetos seleccionados. 'SerializedObject' gestiona todo esto."
+
+- id: Q062
+  type: mc
+  prompt: "¿Cuál es el propósito del ajuste 'Interpolate' en un 'Rigidbody'?"
+  options:
+    - "Predecir el movimiento futuro del 'Rigidbody' para compensar la latencia (Extrapolate)."
+    - "Suavizar el movimiento visual (en 'Update') al interpolar entre las posiciones de los dos 'physics steps' (FixedUpdate) anteriores."
+    - "Aumentar la precisión de la detección de colisiones a altas velocidades ('Continuous')."
+    - "Permitir que el 'Rigidbody' interactúe con 'Triggers' cinemáticos."
+  answer: 1
+  explanation: "El 'FixedUpdate' de físicas puede ejecutarse a un 'rate' diferente que el 'Update' de renderizado. La interpolación suaviza el 'jitter' (vibración) visual resultante."
+
+- id: Q063
+  type: mc
+  prompt: "En un 'shader', ¿cuál es el propósito de usar un 'GrabPass'?"
+  options:
+    - "Capturar el contenido de la pantalla *antes* de que el objeto se dibuje, para usarlo como una textura (ej. para refracción/vidrio)."
+    - "Optimizar el 'shader' para que se ejecute en la GPU en lugar de la CPU."
+    - "Agarrar las propiedades del 'Material' desde un 'ScriptableObject'."
+    - "Dibujar el objeto en un 'pass' de 'depth' separado para 'Occlusion'."
+  answer: 0
+  explanation: "Un 'GrabPass' toma una foto de lo que hay detrás del objeto y lo pone en una textura (ej. '_GrabTexture'), permitiendo efectos de distorsión, desenfoque o refracción."
+
+- id: Q064
+  type: mc
+  prompt: "¿Qué permite el atributo '[SerializeReference]' en una variable (ej. una 'List<BaseClass>')?"
+  options:
+    - "Serializar la variable a un archivo JSON externo en lugar de en la escena."
+    - "Permitir que la variable ignore la serialización por completo."
+    - "Serializar *por referencia* (en lugar de por valor), permitiendo que un 'MonoBehaviour' contenga instancias de clases derivadas (polimorfismo) y gestione referencias cíclicas."
+    - "Forzar la serialización de un 'Dictionary' (que normalmente no es serializable)."
+  answer: 2
+  explanation: "Permite la serialización de polimorfismo en clases C# planas (no-MonoBehaviour, no-ScriptableObject), algo que antes era muy difícil de lograr."
+
+- id: Q065
+  type: tf
+  prompt: "Verdadero o Falso: Crear un 'struct' grande (ej. con 10 'floats') y pasarlo como parámetro a un método (sin 'in' o 'ref') puede ser *más lento* que pasar una 'class' equivalente."
+  answer: true
+  explanation: "Verdadero. Los 'structs' grandes se copian por valor. Pasar una 'class' (un tipo de referencia) solo copia la referencia (el 'puntero'), lo cual es mucho más rápido si el 'struct' es grande. Se recomienda 'in' o 'ref' para 'structs' grandes."
+
+- id: Q066
+  type: mc
+  prompt: "En un 'Animator Controller', ¿para qué se utiliza un 'Avatar Mask' en una capa (Layer)?"
+  options:
+    - "Para definir qué partes del cuerpo (huesos) serán afectadas por las animaciones de esa capa (ej. 'solo parte superior del cuerpo')."
+    - "Para cambiar el 'Avatar' (el 'rig') del personaje en tiempo de ejecución."
+    - "Para optimizar la memoria de las animaciones, comprimiendo los huesos no utilizados."
+    - "Para sincronizar la animación con un evento de audio."
+  answer: 0
+  explanation: "Es la técnica estándar para permitir, por ejemplo, que un personaje camine (capa base, 'full body') y dispare un arma (capa superior, con máscara 'upper body') al mismo tiempo."
+
+- id: Q067
+  type: mc
+  prompt: "En Addressables, ¿cuál es la diferencia clave entre 'Addressables.Release(handle)' y 'Addressables.ReleaseInstance(gameObject)'?"
+  options:
+    - "No hay diferencia, 'ReleaseInstance' es un alias obsoleto de 'Release'."
+    - "'Release(handle)' libera el 'asset' cargado (ej. el Prefab), mientras 'ReleaseInstance' solo destruye la instancia del 'GameObject' en la escena."
+    - "'ReleaseInstance' destruye el 'GameObject' *y* decrementa el contador de referencias del 'asset' que se usó para instanciarlo. 'Release(handle)' solo decrementa el contador."
+    - "'Release' es para 'assets' locales y 'ReleaseInstance' para 'assets' remotos."
+  answer: 2
+  explanation: "Si usaste 'InstantiateAsync', debes usar 'ReleaseInstance' para destruir el objeto y gestionar la memoria. Si usaste 'LoadAssetAsync', debes usar 'Release' sobre el 'handle' o el 'asset' cargado."
+
+- id: Q068
+  type: mc
+  prompt: "En HDRP (High Definition Render Pipeline), ¿cuál es la forma estándar de inyectar un 'shader' personalizado (ej. 'Blit') en un punto específico del 'frame', como 'AfterPostProcess'?"
+  options:
+    - "Usando un 'Renderer Feature' como en URP."
+    - "Añadiendo un 'Custom Pass' al 'Volume' global o local."
+    - "Modificando el 'shader' 'Lit' de HDRP directamente."
+    - "Usando 'CommandBuffer.DrawMesh' en el 'Update()' de un 'MonoBehaviour'."
+  answer: 1
+  explanation: "HDRP usa el sistema 'Custom Pass' (adjunto a los 'Volumes') para la inyección de pases, a diferencia de URP que usa 'Renderer Features'."
+
+- id: Q069
+  type: mc
+  prompt: "¿Cuál es el propósito de la función 'Physics.BakeMesh(meshID, convex)'?"
+  options:
+    - "Generar 'lightmaps' para una malla estática."
+    - "Pre-calcular y 'cachear' la representación de una malla de colisión ('cooking') para el motor de físicas, mejorando el rendimiento de instanciación de 'MeshColliders'."
+    - "Combinar múltiples mallas en una sola malla 'horneada' para 'static batching'."
+    - "Convertir un 'SkinnedMeshRenderer' a un 'MeshRenderer' estático."
+  answer: 1
+  explanation: "El 'Mesh Cooking' (preparar la malla para físicas) es costoso. 'BakeMesh' permite hacerlo en tiempo de carga (o 'build') y 'cachearlo' para instanciar 'MeshColliders' que usan esa malla mucho más rápido."
+
+- id: Q070
+  type: tf
+  prompt: "Verdadero o Falso: Un método estático marcado con el atributo '[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]' se ejecutará automáticamente después de que la primera escena se cargue, *antes* de que se llamen los métodos 'Awake()'."
+  answer: true
+  explanation: "Verdadero. Es un 'hook' que se ejecuta después de que los objetos de la escena son deserializados pero antes de que se llame 'Awake()' en cualquier 'MonoBehaviour', ideal para inicializar 'Singletons' o sistemas globales."
+
+- id: Q071
+  type: mc
+  prompt: "¿Cuál es el propósito del 'profiling marker' 'Profiler.BeginSample' y 'Profiler.EndSample'?"
+  options:
+    - "Insertar código de 'profiling' personalizado en el 'build' de producción para 'debugging' remoto."
+    - "Añadir marcadores personalizados al 'Unity Profiler' para medir el costo de bloques de código específicos (ej. 'MyAISystem.Update')."
+    - "Iniciar y detener la grabación de una sesión del 'Profiler'."
+    - "Marcar objetos para que el 'Memory Profiler' los ignore."
+  answer: 1
+  explanation: "Estos métodos (y 'ProfilingScope') te permiten etiquetar secciones de tu código, haciendo mucho más fácil identificar cuellos de botella en el 'Profiler' en lugar de ver solo 'Update()' o 'FixedUpdate()'."
+
+- id: Q072
+  type: mc
+  prompt: "En C#, ¿qué hace la palabra clave 'readonly' en un campo de un 'struct' (ej. 'public readonly float speed')?"
+  options:
+    - "El campo solo puede ser asignado en el 'main thread'."
+    - "El campo solo puede ser asignado en el constructor del 'struct' o en su inicialización."
+    - "Impide que el 'Garbage Collector' toque este 'struct'."
+    - "Hace que el 'struct' sea un 'reference type' en lugar de un 'value type'."
+  answer: 1
+  explanation: "Garantiza la inmutabilidad del campo después de la construcción. En 'structs', esto también puede ayudar al compilador a evitar copias defensivas, mejorando el rendimiento."
+
+- id: Q073
+  type: mc
+  prompt: "Necesitas ejecutar un método de un 'script' de editor ('Editor Script') cada vez que el usuario mueva, rote o escale un 'GameObject' en la 'Scene View'. ¿A qué 'delegate' (evento) te suscribirías?"
+  options:
+    - "EditorApplication.update"
+    - "SceneView.duringSceneGui"
+    - "Undo.undoRedoPerformed"
+    - "Tools.transformHandlesChanged"
+  answer: 3
+  explanation: "'Tools.transformHandlesChanged' se introdujo específicamente para detectar cambios interactivos en la 'Scene View' (no cambios por 'script'), que es más eficiente que 'Undo.undoRedoPerformed'."
+
+- id: Q074
+  type: tf
+  prompt: "Verdadero o Falso: 'UnityWebRequest' (para peticiones HTTP) es una operación asíncrona que se ejecuta en un hilo ('thread') separado, por lo que no bloquea el 'main thread' incluso si no se usa con una 'Coroutine' o 'await'."
+  answer: true
+  explanation: "Verdadero. La operación de red subyacente se ejecuta en un hilo de 'background'. Sin embargo, necesitas 'yield return' (Coroutine) o 'await' (Task) para *obtener* el resultado cuando esté listo sin bloquear el 'main thread' mientras esperas."
+
+- id: Q075
+  type: mc
+  prompt: "¿Cuál es el propósito del 'Overdraw' (sobredibujado) en el 'Render Debugger' (o 'Scene View Mode')?"
+  options:
+    - "Muestra cuántas 'draw calls' se están usando en la escena."
+    - "Visualiza cuántas veces cada píxel en la pantalla está siendo dibujado. Un color rojo brillante indica un alto 'overdraw' (costoso para la GPU), a menudo causado por 'shaders' transparentes."
+    - "Muestra la complejidad de los 'shaders' (número de instrucciones)."
+    - "Muestra los objetos que están marcados como 'Occlusion Static'."
+  answer: 1
+  explanation: "Es una herramienta de optimización de GPU crucial. Si una zona es roja, significa que la GPU está dibujando muchos materiales (usualmente transparentes) uno encima del otro."
+
+- id: Q076
+  type: mc
+  prompt: "En el 'Frame Debugger', ves que un objeto se dibuja, pero luego desaparece. La causa más probable es que otro objeto opaco se dibujó *después* de él, pero estaba *más cerca* de la cámara. ¿Qué prueba falló?"
+  options:
+    - "El 'Scissor Test' (Test de Tijera)."
+    - "El 'Stencil Test' (Test de Esténcil)."
+    - "El 'ZTest' o 'Depth Test' (Test de Profundidad)."
+    - "El 'Alpha Test' (Test Alfa)."
+  answer: 2
+  explanation: "El 'Z-buffer' (o 'Depth Buffer') almacena la profundidad del píxel más cercano. Si un píxel opaco nuevo está más cerca ('LEqual'), pasa el 'ZTest' y sobrescribe el píxel anterior."
+
+- id: Q077
+  type: mc
+  prompt: "¿Cuál es la principal ventaja de rendimiento de usar un 'SkinnedMeshRenderer.BakeMesh()'?"
+  options:
+    - "Permite que la malla 'skinned' reciba 'lightmaps' estáticos."
+    - "Toma una 'foto' (snapshot) de la malla 'skinned' en su pose actual y la guarda en un 'Mesh' estático. Esto es útil para 'ragdolls' o para usar con 'MeshColliders'."
+    - "Reduce el número de huesos ('bones') en el 'rig' de la animación."
+    - "Convierte la animación 'skinned' a DOTS (ECS)."
+  answer: 1
+  explanation: "La malla 'skinned' (deformada por huesos) es calculada en la GPU (o CPU). 'BakeMesh' permite obtener el resultado de esa deformación en un 'Mesh' estático, que luego puede ser usado por otros sistemas (como físicas)."
+
+- id: Q078
+  type: tf
+  prompt: "Verdadero o Falso: En un 'shader', un 'float3' (ej. '_Color') se alinea en memoria (padding) como si fuera un 'float4' dentro de un bloque 'CBUFFER'."
+  answer: true
+  explanation: "Verdadero. Debido a los requisitos de alineación de memoria de la GPU (especialmente en HLSL/DX), los 'float3' casi siempre ocupan el espacio de un 'float4' en los 'Constant Buffers', algo importante a saber para optimizar 'buffers'."
+
+- id: Q079
+  type: mc
+  prompt: "¿Qué hace la clase 'LoadSceneParameters' cuando se usa con 'SceneManager.LoadSceneAsync'?"
+  options:
+    - "Permite definir si la escena se cargará aditivamente ('Additive') y si la escena debe activarse ('activate') inmediatamente después de cargarla."
+    - "Define el 'AssetBundle' del cual se debe cargar la escena."
+    - "Configura el 'LOD bias' para la escena que se va a cargar."
+    - "Permite cargar escenas de forma síncrona en lugar de asíncrona."
+  answer: 0
+  explanation: "Se usa para pasar parámetros, siendo el más común 'LoadSceneMode.Additive'. La carga asíncrona (AsyncOperation) tiene una propiedad 'allowSceneActivation' que permite cargar la escena (90%) y esperar para activarla (el 10% final)."
+
+- id: Q080
+  type: mc
+  prompt: "Quieres crear una herramienta de editor que dibuje un 'wireframe' personalizado sobre un 'GameObject' seleccionado, *incluso si no está en la 'Scene View'*. ¿Qué atributo usarías en un método estático?"
+  options:
+    - "[OnInspectorGUI]"
+    - "[DrawGizmo(GizmoType.Selected)]"
+    - "[CustomPreview(typeof(GameObject))]"
+    - "[InitializeOnLoad]"
+  answer: 2
+  explanation: "'[CustomPreview]' permite definir una clase que renderiza la vista previa (thumbnail) de un objeto en la ventana 'Project' o en el 'Object Picker'."
+
+- id: Q081
+  type: mc
+  prompt: "¿Cuál es el propósito del atributo '[Test]' en el framework 'Unity Test Runner'?"
+  options:
+    - "Marca un método para ser ejecutado solo en el 'build' de producción."
+    - "Marca un método como una prueba (en 'EditMode' o 'PlayMode') que el 'Test Runner' debe descubrir y ejecutar."
+    - "Optimiza el método para que se ejecute en un 'job' de 'Burst'."
+    - "Define un 'CustomEditor' para el 'script' de prueba."
+  answer: 1
+  explanation: "El atributo [Test] (de NUnit) es el indicador principal que usa el Test Runner de Unity para identificar un método como una prueba unitaria o de integración."
+
+- id: Q082
+  type: mc
+  prompt: "En el 'Input System' (nuevo), ¿cuál es la diferencia clave entre un 'InputAction' tipo 'Value' (ej. Vector2) y 'Button'?"
+  options:
+    - "'Value' es para 'gamepads' y 'Button' para teclado."
+    - "'Value' reporta continuamente el estado (ej. la posición de un 'stick'), mientras 'Button' reporta eventos discretos ('Performed', 'Canceled') en el momento del cambio."
+    - "'Button' no puede tener 'bindings' (enlaces), solo 'Value' puede."
+    - "'Value' genera 'garbage' (GC Alloc) en cada 'frame', mientras 'Button' no."
+  answer: 1
+  explanation: "'Value' es para entradas analógicas (sticks, 'mouse delta'). 'Button' es para entradas binarias (presionar/soltar)."
+
+- id: Q083
+  type: mc
+  prompt: "¿Cómo ejecutarías un método C# estático (ej. 'MyEditorScript.BuildProject()') desde la línea de comandos para un 'build' automatizado (CI/CD)?"
+  options:
+    - "Unity.exe -executeMethod BuildProject"
+    - "Unity.exe -batchmode -quit -executeMethod MyEditorScript.BuildProject"
+    - "Unity.exe -runTest MyEditorScript.BuildProject"
+    - "No es posible; se debe usar el 'Build Settings Menu' o 'Unity Cloud Build'."
+  answer: 1
+  explanation: "'-batchmode' (corre sin UI) y '-quit' (cierra al terminar) son esenciales para CI/CD. '-executeMethod' llama al método estático."
+
+- id: Q084
+  type: mc
+  prompt: "En DOTS (ECS), ¿qué atributos se usan para definir explícitamente el orden de ejecución de un 'ISystem' relativo a otro?"
+  options:
+    - "[UpdatePriority(1)] y [UpdatePriority(2)]"
+    - "[UpdateInGroup(typeof(SimulationSystemGroup))] y [UpdateBefore(typeof(OtherSystem))]"
+    - "[ExecuteIn(typeof(FixedUpdate))] y [ExecuteIn(typeof(Update))]"
+    - "[SystemOrder(1)] y [SystemOrder(2)]"
+  answer: 1
+  explanation: "Se usa [UpdateInGroup] para asignar el sistema a un grupo (como 'SimulationSystemGroup'), y luego [UpdateBefore] o [UpdateAfter] para ordenarlo relativo a otros sistemas."
+
+- id: Q085
+  type: mc
+  prompt: "¿Cuál es el propósito del paquete 'Adaptive Performance' (desarrollado con Samsung)?"
+  options:
+    - "Cargar diferentes 'AssetBundles' dependiendo del modelo del dispositivo."
+    - "Monitorear el estado térmico (calor) y de la batería del dispositivo, permitiendo al juego reducir la calidad (ej. 'framerate') dinámicamente para evitar el 'throttling' (estrangulamiento térmico)."
+    - "Ajustar automáticamente la sensibilidad del 'touch input' basado en la velocidad del dedo."
+    - "Comprimir texturas en tiempo de ejecución para ahorrar memoria."
+  answer: 1
+
+- id: Q086
+  type: mc
+  prompt: "Tienes un 'ComputeShader' con 1024 hilos (threads) definidos en el 'kernel' (ej. [numthreads(1024, 1, 1)]). ¿Cómo lo despacharías ('Dispatch') desde C# para ejecutarlo exactamente una vez sobre 1024 elementos?"
+  options:
+    - "computeShader.Dispatch(kernelIndex, 1, 1, 1);"
+    - "computeShader.Dispatch(kernelIndex, 1024, 1, 1);"
+    - "computeShader.Dispatch(kernelIndex, 1, 1024, 1);"
+    - "computeShader.Dispatch(kernelIndex, 1024, 1024, 1024);"
+  answer: 0
+  explanation: "El 'Dispatch' toma el *número de grupos* (thread groups). Si el kernel tiene 1024 hilos en X, necesitas 1 grupo (1 * 1024 = 1024 hilos totales)."
+
+- id: Q087
+  type: tf
+  prompt: "Verdadero o Falso: Es posible añadir un paquete de Unity directamente desde un repositorio de Git (ej. GitHub) modificando el archivo 'manifest.json' en la carpeta 'Packages'."
+  answer: true
+  explanation: "Verdadero. El 'Package Manager' soporta añadir dependencias de Git añadiendo una línea como '\"com.mycompany.mypackage\": \"https://github.com/myuser/myrepo.git\"' al 'manifest.json'."
+
+- id: Q088
+  type: mc
+  prompt: "En un 'Rigidbody', ¿cuál es la ventaja de usar 'Collision Detection' = 'Continuous Speculative' sobre 'Continuous Dynamic'?"
+  options:
+    - "Es más rápido (menos costoso) y usa 'speculative contacts' (predicción) para evitar 'tunneling', siendo el método preferido para 'Kinematic Rigidbody movers'."
+    - "Es más preciso físicamente (basado en 'sweeping') pero mucho más costoso que 'Speculative'."
+    - "Solo funciona con 'MeshColliders' cóncavos."
+    - "Solo funciona en el 'main thread' y no en 'jobs' de físicas."
+  answer: 0
+  explanation: "'Continuous Speculative' es el modo moderno (PhysX 4) que es más rápido y mejor para la mayoría de los casos, especialmente cinemáticos, que el 'sweeping' (Dynamic)."
+
+- id: Q089
+  type: tf
+  prompt: "Verdadero o Falso: Un 'AudioMixerSnapshot' almacena los valores (ej. volumen, 'pitch', efectos) de todos los parámetros de un 'AudioMixer' en un momento dado, y se puede usar 'TransitionTo()' para 'interpolar' (fade) suavemente a ese estado."
+  answer: true
+  explanation: "Verdadero. Es la técnica estándar para cambiar mezclas de audio (ej. de 'Explorando' a 'Combate' o 'Pausa') de forma suave en un tiempo determinado."
+
+- id: Q090
+  type: mc
+  prompt: "¿Qué permite la función 'Dynamic Resolution Scaling' (Escalado de Resolución Dinámica) en URP/HDRP?"
+  options:
+    - "Cambiar el 'AssetBundle' de texturas basado en la resolución de la pantalla."
+    - "Aumentar o disminuir la resolución de renderizado interna (ej. al 80%) en tiempo de ejecución para mantener un 'framerate' objetivo (ej. 60fps) cuando la carga de la GPU es alta."
+    - "Aplicar 'Anti-Aliasing' solo a los objetos dinámicos."
+    - "Cargar 'LODs' (Niveles de Detalle) basados en la resolución en lugar de la distancia."
+  answer: 1
+
+- id: Q091
+  type: mc
+  prompt: "En el sistema de 'Baked Global Illumination', ¿cuál es la principal diferencia entre el 'Progressive CPU/GPU Lightmapper' y el obsoleto 'Enlighten'?"
+  options:
+    - "Progressive es solo para 'realtime GI', Enlighten es para 'baked GI'."
+    - "Progressive calcula 'lightmaps' estáticos 'offline' (en el editor), mientras Enlighten pre-calculaba datos para 'indirect lighting' que podía actualizarse en 'runtime'."
+    - "Progressive no soporta 'light probes', solo 'lightmaps'."
+    - "Enlighten era un 'lightmapper' basado en 'ray tracing' y Progressive usa 'path tracing'."
+  answer: 1
+  explanation: "Progressive (CPU/GPU) genera 'lightmaps' estáticos en el editor. Enlighten (obsoleto) era famoso por su capacidad de 'Precomputed Realtime GI', que permitía que la luz indirecta reaccionara a cambios (ej. luces dinámicas)."
+
+- id: Q092
+  type: mc
+  prompt: "¿Cuál es la ventaja principal de usar 'Prefab Variants' en lugar de simplemente anidar 'Prefabs' ('Nested Prefabs')?"
+  options:
+    - "Reducen drásticamente el tamaño del 'build' en comparación con los 'Prefabs' normales."
+    - "Permiten crear una 'variación' (ej. 'EnemigoRojo') que hereda la estructura y componentes del 'Prefab' base (ej. 'Enemigo') pero permite 'overrides' (sobrescrituras) de propiedades y componentes."
+    - "Son la única forma de usar 'LOD Group' en un 'GameObject'."
+    - "Se cargan más rápido en 'runtime' porque usan 'Addressables' automáticamente."
+  answer: 1
+  explanation: "Los 'Prefab Variants' permiten la herencia (ej. BaseEnemigo -> Mago, Guerrero). Si cambias la base, todas las variantes heredan el cambio, facilitando la gestión de 'assets' similares."
+
+- id: Q093
+  type: mc
+  prompt: "En el sistema UGUI (Canvas), ¿cuál es el propósito principal de los 'Anchors' del 'RectTransform'?"
+  options:
+    - "Definir el punto de pivote (rotación/escala) del elemento de UI."
+    - "Determinar a qué elemento 'padre' se adjuntará el 'RectTransform' en la jerarquía."
+    - "Definir cómo la posición y el tamaño del elemento responden (se escalan/mueven) cuando el 'Canvas' (o el 'RectTransform' padre) cambia de tamaño (UI responsiva)."
+    - "Fijar el elemento en su posición 'world space' (espacio del mundo) ignorando el 'Canvas'."
+  answer: 2
+  explanation: "Los 'anchors' definen los puntos de referencia (como porcentajes del padre) que el 'Rect' usa para calcular su posición y tamaño, permitiendo UI que se adapta a diferentes resoluciones."
+
+- id: Q094
+  type: mc
+  prompt: "En un 'Animator Controller' (Mecanim), ¿cuál es el caso de uso ideal para un '1D Blend Tree'?"
+  options:
+    - "Intercalar (mezclar) suavemente entre múltiples animaciones (ej. 'Idle', 'Walk', 'Run') basándose en un solo parámetro 'float' (ej. 'Speed')."
+    - "Reproducir una animación aleatoria de una lista cada vez que se entra al estado."
+    - "Definir lógica compleja ('if/else') dentro del 'Animator' usando 'scripts'."
+    - "Sincronizar dos animaciones que se ejecutan en capas ('Layers') separadas."
+  answer: 0
+  explanation: "Un 'Blend Tree 1D' es perfecto para mezclar animaciones de movimiento (caminar/correr) basadas en la velocidad del personaje. Un '2D Blend Tree' lo haría con dos parámetros (ej. VelocidadX, VelocidadY)."
+
+- id: Q095
+  type: mc
+  prompt: "¿Cuál es la diferencia fundamental entre 'Light Probes' (Sondas de Luz) y 'Reflection Probes' (Sondas de Reflejo)?"
+  options:
+    - "'Light Probes' son solo para 'realtime lights', 'Reflection Probes' son solo para 'baked lights'."
+    - "'Light Probes' capturan la iluminación difusa ('diffuse') e indirecta, mientras 'Reflection Probes' capturan el entorno (skybox, objetos) para reflejos especulares ('specular')."
+    - "'Light Probes' iluminan objetos estáticos, 'Reflection Probes' iluminan objetos dinámicos."
+    - "Son el mismo sistema; 'Light Probe' es el nombre antiguo de 'Reflection Probe'."
+  answer: 1
+  explanation: "Un objeto dinámico usa 'Light Probes' para saber cuánta luz (difusa) 'baked' debe recibir, y usa 'Reflection Probes' para saber qué (especular) debe reflejar."
+
+- id: Q096
+  type: tf
+  prompt: "Verdadero o Falso: El componente 'Cloth' (Tela) interactúa y colisiona con cualquier 'MeshCollider' o 'BoxCollider' estándar en la escena por defecto."
+  answer: false
+  explanation: "Falso. El 'Cloth' de Unity usa un 'solver' separado. Para colisionar con el mundo, requiere sus propios 'Cloth Sphere Colliders' y 'Capsule Colliders', y no interactúa con los 'colliders' 3D normales."
+
+- id: Q097
+  type: mc
+  prompt: "En la ventana 'Animation', ¿cómo se llama a una función (método) en un 'script' (MonoBehaviour) del mismo 'GameObject' en un 'frame' específico del 'AnimationClip'?"
+  options:
+    - "Usando un 'Blend Tree' configurado en modo 'Function Call'."
+    - "Añadiendo un 'Animation Event' a la línea de tiempo de la animación y escribiendo el nombre de la función."
+    - "Modificando el 'Avatar Mask' para incluir 'scripts'."
+    - "Usando un 'State Machine Behaviour' en el estado 'Animator'."
+  answer: 1
+  explanation: "Los 'Animation Events' son el método estándar para invocar métodos (ej. 'PlayFootstepSound()' o 'FireArrow()') en puntos específicos de la animación."
+
+- id: Q098
+  type: mc
+  prompt: "En URP/HDRP, ¿cómo funciona el sistema de 'Volumes' (Volúmenes) de Post-Procesado cuando múltiples 'Volumes' afectan a la cámara?"
+  options:
+    - "Solo un 'Volume' puede estar activo a la vez; el que tenga la 'Priority' (Prioridad) más alta anula a todos los demás."
+    - "El 'pipeline' mezcla ('blends') la configuración de todos los 'Volumes' activos (basados en 'Priority' y 'Weight'/'Blend Distance') para crear el efecto final en la cámara."
+    - "Los 'Volumes' deben ser hijos ('children') directos de la cámara para funcionar."
+    - "Los 'Volumes' globales siempre anulan a los 'Volumes' locales, sin 'blending'."
+  answer: 1
+  explanation: "El sistema de 'Volumes' está diseñado para mezclar configuraciones (ej. 'Bloom', 'Color Grading') de múltiples volúmenes (globales y locales) basados en la posición de la cámara."
+
+- id: Q099
+  type: mc
+  prompt: "¿Cuál es el propósito principal del servicio 'Unity Remote Config'?"
+  options:
+    - "Permitir a los desarrolladores depurar el juego ('debug') remotamente en un dispositivo."
+    - "Cambiar variables y configuraciones del juego (ej. 'dificultad', 'precio de items') dinámicamente desde un 'dashboard' web, sin necesidad de lanzar una nueva actualización del juego."
+    - "Almacenar los 'save data' (datos guardados) de los jugadores en la nube (Cloud Save)."
+    - "Descargar 'AssetBundles' remotos (Addressables)."
+  answer: 1
+  explanation: "Remote Config se usa para 'tunear' el juego o activar/desactivar características (ej. eventos de temporada) de forma remota, sin requerir que el usuario actualice la aplicación."
+
+- id: Q100
+  type: tf
+  prompt: "Verdadero o Falso: El 'Bundle Identifier' (ej. 'com.mycompany.mygame') definido en 'Project Settings > Player' es el identificador único de la aplicación en las tiendas (App Store, Google Play) y no puede ser el mismo que el de otra aplicación existente."
+  answer: true
+  explanation: "Verdadero. Es la identidad fundamental de la aplicación en el ecosistema móvil. Cambiarlo significa que la tienda lo tratará como una aplicación completamente nueva."
