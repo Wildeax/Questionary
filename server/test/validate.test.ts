@@ -48,6 +48,13 @@ describe("parseQuestionsFromText", () => {
       /duplicate id 'Q1'/
     );
   });
+
+  it("rejects blank multiple-choice options", () => {
+    assert.throws(
+      () => parseQuestionsFromText(`- metadata:\n    name: x\n- id: Q1\n  type: mc\n  prompt: p\n  options: ["a", " "]\n  answer: 0`),
+      /options must not be blank/
+    );
+  });
 });
 
 describe("normalizeTags", () => {

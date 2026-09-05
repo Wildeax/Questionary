@@ -141,6 +141,10 @@ export function validateQuizData(raw: unknown[]): QuizData {
         errors.push(`MC Question ${questionNum}: Must have at least 2 options, got ${q.options.length}`);
         continue;
       }
+      if (q.options.some((o: unknown) => String(o).trim() === "")) {
+        errors.push(`MC Question ${questionNum}: options must not be blank`);
+        continue;
+      }
       if (typeof q.answer !== "number") {
         errors.push(`MC Question ${questionNum}: 'answer' must be a number (index), got ${typeof q.answer}`);
         errors.push(`   Example: answer: 0  (for first option)`);
