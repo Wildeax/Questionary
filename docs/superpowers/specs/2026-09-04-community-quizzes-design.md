@@ -346,7 +346,8 @@ does in local mode, from questions plus answers, with no new component.
 | POST | `/api/rooms` | user | body `{ quizId, mode: "race" | "sync", questionSeconds? }`. Quiz must be published. Host is seated as a player under their username. Returns `{ code }`. |
 | GET | `/api/rooms/:code` | none | `{ state, mode, you: { id, isHost } | null }` or 404 |
 | POST | `/api/rooms/:code/join` | none | body `{ nickname }`. Only in `lobby`. Sets the player cookie. 400 if the nickname is taken or not 1 to 20 chars. 409 if the room already started or has 50 players. |
-| GET | `/api/rooms/:code/events` | player cookie | SSE. 403 if the cookie is not a member of this room. Sends a full snapshot on connect and on every change. A comment line every 25 seconds keeps proxies from closing it. |
+| GET | `/api/rooms/:code/events` | player cookie | SSE. 403 if the cookie is not a member of this room. Sends a full snapshot on connect and on every change. A comment line every 25 seconds keeps proxies from closing it; if the room was swept meanwhile, that tick ends the stream. |
+| GET | `/api/rooms/:code/questions` | player cookie | race rooms only, once running. The stripped list for players still playing; the full list for a player who has finished. |
 | POST | `/api/rooms/:code/start` | host | lobby to countdown (race) or to question 0 (sync) |
 | POST | `/api/rooms/:code/answer` | player | body `{ questionId, value }` |
 | POST | `/api/rooms/:code/next` | host | sync only, reveal to next question or finished |
@@ -516,8 +517,12 @@ response removes it.
 The `rp` cookie identifies the seat. Opening the events route again attaches a new
 listener and sends the current snapshot. The client renders from the snapshot alone, so
 there is no client-side state to recover. In race mode the client also keeps its own
-answers in memory to drive `QuestionPage`; after a refresh it rebuilds them from
-`you.answered` and starts at the first unanswered question.
+answers in memory to drive `QuestionPage`; after a refresh it seeds them from
+`you.answers` (the player's own values, keyed by question id) and starts at the first
+unanswered question. A player who had already finished fetches the full questions
+(`GET /api/rooms/:code/questions` returns the answer key to finished race players) and
+lands back on their results. If the stream closes for good (a swept room, a restarted
+server), the page shows "Room not found or expired" instead of waiting.
 
 ## 15. Frontend
 
@@ -526,7 +531,7 @@ header. A `useMe()` hook fetches `/api/me` once and caches it in context.
 
 | Route | Page | Data |
 |---|---|---|
-| `/` | Catalog | `GET /api/quizzes`, `GET /api/tags` |
+| `/` | Catalog | `GET /api/quizzes`, `GET /api/tags`; also a "Join a room" code field that navigates to `/r/CODE` |
 | `/local` | Local | today's `SetupView` flow, no network |
 | `/quiz/:id` | Quiz | `GET /api/quizzes/:id` |
 | `/quiz/:id/play` | Play | attempt start, `QuizRunner`, submit |
