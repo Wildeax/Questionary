@@ -1,0 +1,15 @@
+{
+  "name": "questionary-e2e",
+  "private": true,
+  "description": "Headless browser checklists for Questionary. Not part of the app build.",
+  "scripts": {
+    "phase1": "node checklist.cjs",
+    "phase2": "node checklist2.cjs",
+    "phase3": "node checklist3.cjs",
+    "phase4": "node checklist4.cjs",
+    "all": "node checklist.cjs && node checklist2.cjs && node checklist3.cjs && node checklist4.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
