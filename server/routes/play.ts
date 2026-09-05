@@ -84,6 +84,10 @@ export function playRoutes(db: Db): express.Router {
     res.json({ correct: result.correct, total: result.total, durationMs: now - attempt.started_at, questions });
   });
 
+  // ponytail: this returns the full answer key to anyone who posts answers, so a
+  // determined player can read the key before submitting a stored attempt and
+  // the leaderboard runs on trust. Upgrade: return per-question correctness and
+  // explanations without `answer` here, or require an attempt id for the key.
   r.post("/quizzes/:id/grade", (req, res) => {
     const row = publishedQuiz(db, req.params.id);
     const answers = parseAnswers(req.body);

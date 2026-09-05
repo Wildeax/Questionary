@@ -21,7 +21,7 @@ export function Play() {
   const { me, loading } = useMe();
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>({ kind: "loading" });
-  const saveId = `online_${quizId}`;
+  const saveId = `online_${quizId}_${me?.id ?? "anon"}`;
   const runToken = useRef(0);
 
   async function start() {
@@ -65,7 +65,7 @@ export function Play() {
       const r = attemptId ? await submitAttempt(attemptId, answers) : await gradeAnonymous(quizId, answers);
       return r.questions;
     } catch (e) {
-      if (e instanceof ApiError && e.status === 409) {
+      if (e instanceof ApiError && (e.status === 409 || e.status === 404)) {
         await clearQuizProgress(saveId).catch(() => undefined);
         setPhase({ kind: "stale" });
       }
@@ -78,7 +78,7 @@ export function Play() {
   if (phase.kind === "stale") {
     return (
       <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
-        <p className="text-neutral-200">This quiz was updated by its author, so your attempt cannot be submitted.</p>
+        <p className="text-neutral-200">This attempt can no longer be submitted. The quiz was updated by its author or removed.</p>
         <button onClick={() => void start()} className="mt-4 rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500">
           Start over
         </button>

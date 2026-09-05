@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import { MeProvider, useMe } from "../me.tsx";
 import { logout } from "../api.ts";
@@ -22,6 +22,9 @@ function Header() {
   const location = useLocation();
   const [params] = useSearchParams();
   const [q, setQ] = useState(params.get("q") ?? "");
+  useEffect(() => {
+    setQ(params.get("q") ?? "");
+  }, [params]);
 
   return (
     <header className="w-full border-b border-neutral-800 sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">

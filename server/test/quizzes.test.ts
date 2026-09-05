@@ -155,4 +155,11 @@ describe("quiz routes", () => {
     assert.equal(unknown.status, 200);
     assert.equal(unknown.json.items.length, 20);
   });
+
+  it("clamps absurd page numbers instead of failing", async () => {
+    const r = await api(t.base, "GET", "/api/quizzes?page=99999999999999999999");
+    assert.equal(r.status, 200);
+    assert.deepEqual(r.json.items, []);
+    assert.equal(r.json.hasMore, false);
+  });
 });

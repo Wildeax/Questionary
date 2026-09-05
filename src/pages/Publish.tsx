@@ -30,8 +30,10 @@ export function Publish() {
 
   useEffect(() => {
     if (!editing) return;
+    let alive = true;
     getQuiz(id!)
       .then((q) => {
+        if (!alive) return;
         if (!q.questions) {
           setError("Only the author can edit this quiz.");
           return;
@@ -46,7 +48,10 @@ export function Publish() {
         setText(dump([{ metadata }, ...q.questions], { lineWidth: -1 }));
         setCount(q.questions.length);
       })
-      .catch((e: Error) => setError(e.message));
+      .catch((e: Error) => alive && setError(e.message));
+    return () => {
+      alive = false;
+    };
   }, [editing, id]);
 
   function onTextChange(value: string) {

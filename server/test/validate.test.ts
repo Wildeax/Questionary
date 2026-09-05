@@ -38,6 +38,16 @@ describe("parseQuestionsFromText", () => {
       /out of range/
     );
   });
+
+  it("rejects duplicate question ids", () => {
+    assert.throws(
+      () =>
+        parseQuestionsFromText(
+          `- metadata:\n    name: x\n- id: Q1\n  type: tf\n  prompt: a\n  answer: true\n- id: Q1\n  type: tf\n  prompt: b\n  answer: false`
+        ),
+      /duplicate id 'Q1'/
+    );
+  });
 });
 
 describe("normalizeTags", () => {

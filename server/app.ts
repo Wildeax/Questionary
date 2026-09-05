@@ -9,6 +9,7 @@ import { userRoutes } from "./routes/users.ts";
 
 export function createApp(db: Db, config: Config): express.Express {
   const app = express();
+  // ponytail: no rate limiting in code. Upgrade: limit_req in nginx or Caddy if abuse shows up.
   app.use("/api", jsonOnly, express.json({ limit: "1mb" }), attachUser(db, config));
   app.use("/api", authRoutes(db, config));
   app.use("/api", quizRoutes(db));

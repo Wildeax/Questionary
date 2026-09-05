@@ -41,7 +41,7 @@ export function quizRoutes(db: Db): express.Router {
     const tag = typeof req.query.tag === "string" ? req.query.tag.trim().toLowerCase() : "";
     const sortKey = String(req.query.sort ?? "top");
     const sort = Object.hasOwn(SORTS, sortKey) ? SORTS[sortKey] : SORTS.top;
-    const page = Math.max(1, Math.floor(Number(req.query.page)) || 1);
+    const page = Math.min(Math.max(1, Math.floor(Number(req.query.page)) || 1), 10_000);
     // ponytail: LIKE '%q%' search, full scan, no ranking. Upgrade: FTS5 on title and description.
     const rows = db
       .prepare(

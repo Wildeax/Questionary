@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import { createApp } from "./app.ts";
 import { openDb } from "./db.ts";
+import { errorHandler } from "./http.ts";
 import type { Config } from "./auth.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -54,6 +55,9 @@ if (production) {
   const vite = await createServer({ root, server: { middlewareMode: true }, appType: "spa" });
   app.use(vite.middlewares);
 }
+
+// Registered again after the static and Vite handlers so their errors also get the JSON shape.
+app.use(errorHandler);
 
 const port = Number(process.env.PORT ?? 3000);
 app.listen(port, () => {

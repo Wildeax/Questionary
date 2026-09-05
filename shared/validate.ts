@@ -126,6 +126,11 @@ export function validateQuizData(raw: unknown[]): QuizData {
       continue;
     }
 
+    if (questions.some((existing) => existing.id === String(q.id))) {
+      errors.push(`Question ${questionNum}: duplicate id '${String(q.id)}'. Ids must be unique.`);
+      continue;
+    }
+
     if (q.type === "mc") {
       if (!Array.isArray(q.options)) {
         errors.push(`MC Question ${questionNum}: 'options' must be an array`);

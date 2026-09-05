@@ -10,11 +10,15 @@ export function Profile() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let alive = true;
     setData(null);
     setError(null);
     getProfile(username!)
-      .then(setData)
-      .catch((e: Error) => setError(e.message));
+      .then((d) => alive && setData(d))
+      .catch((e: Error) => alive && setError(e.message));
+    return () => {
+      alive = false;
+    };
   }, [username]);
 
   if (error) return <ErrorBox message={error} />;

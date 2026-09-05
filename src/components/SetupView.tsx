@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getTemplate } from "../templates";
+import { getTemplate } from "../templates.ts";
 import type { SavedQuizState } from "../../shared/types.ts";
 import { SavedQuizCard } from "./SavedQuizCard.tsx";
 
