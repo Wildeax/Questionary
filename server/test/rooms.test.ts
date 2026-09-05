@@ -89,6 +89,7 @@ describe("race mode", () => {
 
     clock.advance(1000);
     assert.deepEqual(store.answer(room, bob, "Q1", 1), { finished: false });
+    assert.deepEqual(store.snapshot(room, bob).you!.answers, { Q1: 1 });
     assert.throws(() => store.answer(room, bob, "Q1", 0), /Already answered/);
     assert.throws(() => store.answer(room, bob, "Q2", 1), /Wrong answer type/);
     assert.throws(() => store.answer(room, bob, "nope", 1), /Unknown question/);

@@ -1,6 +1,7 @@
 import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { api, asUser, sampleQuestions, startServer, type TestServer } from "./helpers.ts";
+import { RoomStore } from "../rooms.ts";
 
 function playerCookie(headers: Headers): string {
   const set = headers.get("set-cookie") ?? "";
@@ -115,8 +116,37 @@ describe("room routes", () => {
     assert.equal(a2.json.finished, true);
     assert.equal(a2.json.correct, 2);
     assert.equal(a2.json.questions[0].answer, 1);
+    const full = await api(t.base, "GET", `/api/rooms/${code}/questions`, undefined, hostRp);
+    assert.equal(full.json[0].answer, 1);
     const done = await api(t.base, "GET", `/api/rooms/${code}`, undefined, hostRp);
     assert.equal(done.json.state, "finished");
+  });
+
+  it("pushes a new snapshot on change and drops the listener on disconnect", async () => {
+    const store = new RoomStore();
+    const s = await startServer(store);
+    try {
+      const owner = asUser(s.db, "owner");
+      const q = await api(s.base, "POST", "/api/quizzes", { title: "Push", questions: sampleQuestions }, owner.cookie);
+      await api(s.base, "POST", `/api/quizzes/${q.json.id}/publish`, undefined, owner.cookie);
+      const created = await api(s.base, "POST", "/api/rooms", { quizId: q.json.id, mode: "race" }, owner.cookie);
+      const code: string = created.json.code;
+      const hostRp = playerCookie(created.headers);
+      const res = await fetch(s.base + `/api/rooms/${code}/events`, { headers: { Cookie: hostRp } });
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      const first = decoder.decode((await reader.read()).value);
+      assert.match(first, /"players":\[\{[^\]]*"owner"/);
+      assert.equal(store.get(code)!.listeners.size, 1);
+      await api(s.base, "POST", `/api/rooms/${code}/join`, { nickname: "friend" });
+      const second = decoder.decode((await reader.read()).value);
+      assert.match(second, /"friend"/);
+      await reader.cancel();
+      for (let i = 0; i < 50 && store.get(code)!.listeners.size > 0; i++) await new Promise((r) => setTimeout(r, 20));
+      assert.equal(store.get(code)!.listeners.size, 0);
+    } finally {
+      await s.close();
+    }
   });
 
   it("404s unknown codes", async () => {

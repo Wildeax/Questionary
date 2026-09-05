@@ -116,6 +116,7 @@ export type RoomPlayerView = {
   id: string;
   nickname: string;
   answered: number;
+  answeredCurrent?: boolean;
   finished: boolean;
   correct?: number;
   durationMs?: number;
@@ -139,7 +140,7 @@ export type RoomSnapshot = {
   questionSeconds: number;
   quiz: { id: number; title: string; questionCount: number };
   host: string;
-  you: { id: string; isHost: boolean; answered: string[] } | null;
+  you: { id: string; isHost: boolean; answered: string[]; answers: Record<string, number | boolean> } | null;
   players: RoomPlayerView[];
   countdownEndsAt?: number;
   question?: RoomQuestionView;

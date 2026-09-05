@@ -75,25 +75,43 @@ export function roomRoutes(db: Db, store: RoomStore, production: boolean): expre
 
   r.get("/rooms/:code/events", (req, res) => {
     const { room, pid } = memberOf(req);
-    res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
     const send = () => {
-      res.write(`data: ${JSON.stringify(store.snapshot(room, pid))}\n\n`);
+      try {
+        res.write(`data: ${JSON.stringify(store.snapshot(room, pid))}\n\n`);
+      } catch {
+        // client gone; the close handler unsubscribes
+      }
     };
     send();
     const unsubscribe = store.subscribe(room, send);
-    const heartbeat = setInterval(() => res.write(": keep-alive\n\n"), 25_000);
+    const heartbeat = setInterval(() => {
+      if (store.get(room.code) !== room) {
+        res.end();
+        return;
+      }
+      res.write(": keep-alive\n\n");
+    }, 25_000);
     req.on("close", () => {
       unsubscribe();
       clearInterval(heartbeat);
     });
   });
 
+  // ponytail: a finished race player receives the answer key and could share it with someone
+  // still playing. Accepted for rooms of friends; upgrade: withhold until the room finishes.
   r.get("/rooms/:code/questions", (req, res) => {
-    const { room } = memberOf(req);
+    const { room, pid } = memberOf(req);
     if (room.mode !== "race" || room.state === "lobby" || room.state === "countdown") {
       throw new HttpError(409, "Questions are not available yet");
     }
-    res.json(stripAnswers(room.quiz.questions));
+    const me = room.players.get(pid)!;
+    res.json(me.finishedAt !== undefined ? room.quiz.questions : stripAnswers(room.quiz.questions));
   });
 
   r.post("/rooms/:code/start", (req, res) => {

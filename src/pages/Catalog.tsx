@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { getTags, listQuizzes, type QuizPage } from "../api.ts";
 import type { TagCount } from "../../shared/types.ts";
 import { QuizCardView } from "../components/QuizCardView.tsx";
@@ -9,6 +9,8 @@ const SORTS = ["top", "new", "popular"] as const;
 
 export function Catalog() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [joinCode, setJoinCode] = useState("");
   const q = params.get("q") ?? "";
   const sort = params.get("sort") ?? "top";
   const tag = params.get("tag") ?? "";
@@ -74,6 +76,29 @@ export function Catalog() {
             </button>
           </span>
         )}
+        <form
+          className="ml-auto flex items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            navigate(`/r/${joinCode.trim()}`);
+          }}
+        >
+          <input
+            aria-label="Room code"
+            value={joinCode}
+            maxLength={6}
+            placeholder="Room code"
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            className="w-32 rounded-xl bg-neutral-950 border border-neutral-800 px-3 py-1.5 text-sm font-mono tracking-widest"
+          />
+          <button
+            type="submit"
+            disabled={joinCode.trim().length !== 6}
+            className="rounded-xl px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50"
+          >
+            Join room
+          </button>
+        </form>
       </div>
 
       {tags.length > 0 && (

@@ -52,7 +52,10 @@ function RoomView({ code }: { code: string }) {
       setSnapshot(JSON.parse(e.data) as RoomSnapshot);
       setConnected(true);
     };
-    es.onerror = () => setConnected(false);
+    es.onerror = () => {
+      setConnected(false);
+      if (es.readyState === EventSource.CLOSED) setPhase("missing");
+    };
     streamRef.current = es;
     setPhase("live");
   }, [code]);
@@ -87,7 +90,13 @@ function RoomView({ code }: { code: string }) {
         setQuestions(qs);
         const done = new Set(snapshot.you?.answered ?? []);
         const first = qs.findIndex((q) => !done.has(q.id));
-        setIndex(first === -1 ? qs.length - 1 : first);
+        setAnswers(snapshot.you?.answers ?? {});
+        if (first === -1) {
+          // Every question answered: the server sent the full list, so show the results.
+          setResults({ questions: qs as Question[], answers: snapshot.you?.answers ?? {} });
+        } else {
+          setIndex(first);
+        }
       })
       .catch((e: Error) => alive && setError(e.message));
     return () => {
@@ -117,7 +126,9 @@ function RoomView({ code }: { code: string }) {
   async function submitRaceAnswer() {
     if (!questions || pending === undefined) return;
     const q = questions[index];
-    await act(async () => {
+    setBusy(true);
+    setError(null);
+    try {
       const r = await roomAnswer(code, q.id, pending);
       const nextAnswers = { ...answers, [q.id]: pending };
       setAnswers(nextAnswers);
@@ -127,7 +138,17 @@ function RoomView({ code }: { code: string }) {
       } else if (index < questions.length - 1) {
         setIndex(index + 1);
       }
-    });
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 409 && index < questions.length - 1) {
+        // Already answered elsewhere (another tab); move on.
+        setPending(undefined);
+        setIndex(index + 1);
+      } else {
+        setError((e as Error).message);
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function playAgain() {
@@ -250,7 +271,7 @@ function RoomView({ code }: { code: string }) {
               <ResultsView questions={results.questions} answers={results.answers} onRestart={() => void playAgain()} onExit={() => navigate(`/quiz/${snapshot.quiz.id}`)} exitLabel="Back to quiz" />
             ) : snapshot.state === "finished" && !results ? (
               <div className={card}>
-                <p>The host ended the race.</p>
+                <p>The race is over.</p>
               </div>
             ) : questions ? (
               <QuestionPage
@@ -320,7 +341,7 @@ function RoomView({ code }: { code: string }) {
               })}
             </div>
           )}
-          <p className="mt-4 text-xs text-neutral-500">{snapshot.players.filter((p) => p.answered > (snapshot.question?.index ?? 0)).length} of {snapshot.players.length} answered</p>
+          <p className="mt-4 text-xs text-neutral-500">{snapshot.players.filter((p) => p.answeredCurrent).length} of {snapshot.players.length} answered</p>
         </div>
       )}
 

@@ -2,6 +2,7 @@ import type { AddressInfo } from "node:net";
 import { createApp } from "../app.ts";
 import { openDb, type Db } from "../db.ts";
 import { SESSION_COOKIE, signSession, type Config } from "../auth.ts";
+import { RoomStore } from "../rooms.ts";
 
 export const testConfig: Config = {
   sessionSecret: "test",
@@ -14,9 +15,9 @@ export const testConfig: Config = {
 
 export type TestServer = { db: Db; base: string; close: () => Promise<void> };
 
-export async function startServer(): Promise<TestServer> {
+export async function startServer(store?: RoomStore): Promise<TestServer> {
   const db = openDb(":memory:");
-  const app = createApp(db, testConfig);
+  const app = createApp(db, testConfig, store);
   const server = await new Promise<import("node:http").Server>((resolve) => {
     const s = app.listen(0, () => resolve(s));
   });

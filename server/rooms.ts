@@ -125,6 +125,7 @@ export class RoomStore {
       room.state = "countdown";
       room.countdownEndsAt = this.clock.now() + COUNTDOWN_MS;
       room.cancelTimer = this.clock.schedule(() => {
+        if (room.state !== "countdown") return;
         room.cancelTimer = undefined;
         room.state = "running";
         room.runningSince = this.clock.now();
@@ -218,7 +219,14 @@ export class RoomStore {
       questionSeconds: room.questionSeconds,
       quiz: { id: room.quiz.id, title: room.quiz.title, questionCount: room.quiz.questions.length },
       host: room.players.get(room.hostPlayerId)?.nickname ?? "",
-      you: me ? { id: me.id, isHost: me.id === room.hostPlayerId, answered: Object.keys(me.answers) } : null,
+      you: me
+        ? {
+            id: me.id,
+            isHost: me.id === room.hostPlayerId,
+            answered: Object.keys(me.answers),
+            answers: Object.fromEntries(Object.entries(me.answers).map(([id, a]) => [id, a.value])),
+          }
+        : null,
       players: [...room.players.values()].map((p) => this.view(room, p)),
     };
     if (room.state === "countdown") snap.countdownEndsAt = room.countdownEndsAt;
@@ -247,6 +255,7 @@ export class RoomStore {
     for (const [code, room] of this.rooms) {
       if (room.lastActivity < cutoff) {
         room.cancelTimer?.();
+        room.listeners.clear();
         this.rooms.delete(code);
         removed++;
       }
@@ -265,6 +274,8 @@ export class RoomStore {
     }
     base.points = p.points;
     base.lastPoints = p.lastPoints;
+    base.answeredCurrent =
+      (room.state === "question" || room.state === "reveal") && Boolean(p.answers[room.quiz.questions[room.currentIndex].id]);
     return base;
   }
 
@@ -307,6 +318,8 @@ export class RoomStore {
     for (const fn of room.listeners) fn();
   }
 
+  // ponytail: no host transfer. A host who leaves strands a sync room at reveal.
+  // Upgrade: an auto-advance timer on reveal.
   private requireHost(room: Room, playerId: string): void {
     if (room.hostPlayerId !== playerId) throw new HttpError(403, "Only the host can do that");
   }

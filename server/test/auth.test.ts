@@ -72,6 +72,11 @@ describe("auth routes", () => {
     assert.equal(res.status, 415);
   });
 
+  it("survives a malformed cookie value", async () => {
+    const r = await api(t.base, "GET", "/api/me", undefined, "rp=%zz");
+    assert.equal(r.status, 401);
+  });
+
   it("unknown API paths are JSON 404s", async () => {
     const r = await api(t.base, "GET", "/api/nope");
     assert.equal(r.status, 404);
