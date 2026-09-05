@@ -12,8 +12,10 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 // recursively, so every SQLite write under data/ would restart the server.
 try {
   process.loadEnvFile(join(root, ".env"));
-} catch {
-  // No .env file. The environment itself must carry the settings.
+} catch (err) {
+  // A missing .env is fine: the environment itself carries the settings.
+  // Anything else (unreadable file, a directory at that path) must surface.
+  if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
 }
 
 const production = process.env.NODE_ENV === "production";
