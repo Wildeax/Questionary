@@ -1,4 +1,4 @@
-import type { SavedQuizState } from "./types";
+import type { SavedQuizState } from "../shared/types.ts";
 
 // IndexedDB configuration
 const DB_NAME = "QuestionaryDB";

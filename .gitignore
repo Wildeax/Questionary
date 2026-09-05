@@ -74,3 +74,9 @@ temp/
 
 # Tailwind CSS
 static/css/
+
+# SQLite
+*.db
+*.db-wal
+*.db-shm
+data/

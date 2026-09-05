@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { QuizData } from "../types";
+import type { QuizData } from "../../shared/types.ts";
 
 type SettingsProps = {
   questionCount: number;

@@ -1,5 +1,5 @@
-import type { Question } from "../types";
-import { isMC, formatCorrectAnswer, formatUserAnswer } from "../utils";
+import type { Question } from "../../shared/types.ts";
+import { isMC, formatCorrectAnswer, formatUserAnswer } from "../../shared/questions.ts";
 import { generateQuizResults, exportAsJSON, exportAsCSV } from "../export";
 
 type ResultsProps = {

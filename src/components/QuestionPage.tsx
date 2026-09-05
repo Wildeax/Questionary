@@ -1,5 +1,5 @@
-import type { Question, QuizMetadata } from "../types";
-import { isMC } from "../utils";
+import type { Question, QuizMetadata } from "../../shared/types.ts";
+import { isMC } from "../../shared/questions.ts";
 
 type QuestionPageProps = {
   question: Question;

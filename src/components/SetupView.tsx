@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getTemplate } from "../templates";
-import type { SavedQuizState } from "../types";
+import type { SavedQuizState } from "../../shared/types.ts";
 
 type SetupProps = {
   error: string | null;

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Question, QuizData, QuizSettings, SavedQuizState } from "./types";
-import { parseQuestionsFromText } from "./utils";
+import type { Question, QuizData, QuizSettings, SavedQuizState } from "../shared/types.ts";
+import { parseQuestionsFromText } from "../shared/validate.ts";
 import { saveQuizProgress, loadQuizProgress, clearQuizProgress } from "./storage";
 import { SetupView } from "./components/SetupView";
 import { SettingsView } from "./components/SettingsView";
@@ -84,10 +84,10 @@ export default function QuizPage() {
 
     const questionOrder = questions.map((q) => q.id);
     const currentQuestion = questions[currentIndex] ?? null;
-    const orderedQuestionsSnapshot = questions.map((q) => ({ ...q }));
 
     return {
       id: quizId,
+      source: "local",
       quizData,
       settings: quizSettings,
       answers,
@@ -96,7 +96,6 @@ export default function QuizPage() {
       completed: total > 0 && answeredCount === total,
       questionOrder,
       currentQuestionId: currentQuestion ? currentQuestion.id : null,
-      orderedQuestions: orderedQuestionsSnapshot,
     };
   }
 
@@ -217,13 +216,12 @@ export default function QuizPage() {
 
     restoringQuizRef.current = true;
 
-    const baseQuestions = savedQuizData.quizData.questions;
+    // This app only ever saves data it created itself, so the saved PlayQuizData
+    // still carries full Question fields at runtime.
+    const baseQuestions = savedQuizData.quizData.questions as Question[];
     const byId = new Map(baseQuestions.map((q) => [q.id, q]));
 
-    const savedOrderIds =
-      savedQuizData.questionOrder && savedQuizData.questionOrder.length > 0
-        ? savedQuizData.questionOrder
-        : savedQuizData.orderedQuestions?.map((q) => q.id);
+    const savedOrderIds = savedQuizData.questionOrder;
 
     let orderedQuestions: Question[] = baseQuestions;
     if (savedOrderIds && savedOrderIds.length > 0) {
@@ -235,14 +233,10 @@ export default function QuizPage() {
         const mappedIds = new Set(mapped.map((q) => q.id));
         const missing = baseQuestions.filter((q) => !mappedIds.has(q.id));
         orderedQuestions = [...mapped, ...missing];
-      } else if (savedQuizData.orderedQuestions && savedQuizData.orderedQuestions.length > 0) {
-        orderedQuestions = savedQuizData.orderedQuestions;
       }
-    } else if (savedQuizData.orderedQuestions && savedQuizData.orderedQuestions.length > 0) {
-      orderedQuestions = savedQuizData.orderedQuestions;
     }
 
-    setQuizData(savedQuizData.quizData);
+    setQuizData(savedQuizData.quizData as QuizData);
     setOriginalQuestions(baseQuestions);
     setQuestions(orderedQuestions);
     setQuizSettings(savedQuizData.settings);
