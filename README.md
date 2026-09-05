@@ -62,13 +62,18 @@ run `npm start` and restart by hand, or use your own watcher.
 
 ## Current deployment
 
-`https://questionary.wildeax.com` is served through a Cloudflare Tunnel named
-`questionary` from a Windows machine. Two logon tasks keep it up: "Questionary server"
-runs `node serverindex.ts` with `NODE_ENV=production` in a restart loop, and
-"Questionary tunnel" runs `cloudflared`. Both wrappers and their logs live in
-`%LOCALAPPDATA%Programsquestionary`. To pick up a new build or a changed `.env`,
-run `npm run build` and end the `node` process; the loop restarts it within five
-seconds. The site is only up while that machine is on and the user is logged in.
+`https://questionary.wildeax.com` runs on the `arena-staging` VPS (Ubuntu, shared with
+another app; read `/opt/README-SHARED-BOX.md` there before changing anything). Layout:
+
+- `/opt/questionary/app`: this repository, branch `community`.
+- `/opt/questionary/node`: a pinned Node 22.23.1, not installed system-wide.
+- `/opt/questionary/.env` and `/opt/questionary/data/questionary.db`: settings and data.
+- `questionary.service`: the server on `127.0.0.1:3100`, `NODE_ENV=production`.
+- `cloudflared.service`: the Cloudflare Tunnel `questionary`, which is what
+  `questionary.wildeax.com` resolves to. No public port is opened for the app.
+
+To ship a change, push to `community` and run `/opt/questionary/update.sh` on the box.
+Logs: `journalctl -u questionary` and `journalctl -u cloudflared`.
 
 ## Design
 
