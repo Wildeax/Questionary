@@ -121,6 +121,11 @@ export function Quiz() {
               Play
             </Link>
           )}
+          {isPublished && me && (
+            <Link to={`/rooms/new?quiz=${quiz.id}`} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
+              Host a room
+            </Link>
+          )}
           {isAuthor && (
             <Link to={`/quiz/${quiz.id}/edit`} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
               Edit

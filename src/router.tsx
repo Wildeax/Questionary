@@ -8,6 +8,8 @@ import { Play } from "./pages/Play.tsx";
 import { Publish } from "./pages/Publish.tsx";
 import { Me } from "./pages/Me.tsx";
 import { Profile } from "./pages/Profile.tsx";
+import { RoomNew } from "./pages/RoomNew.tsx";
+import { Room } from "./pages/Room.tsx";
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +24,8 @@ export const router = createBrowserRouter([
       { path: "new", element: <Publish /> },
       { path: "u/:username", element: <Profile /> },
       { path: "me", element: <Me /> },
+      { path: "rooms/new", element: <RoomNew /> },
+      { path: "r/:code", element: <Room /> },
       { path: "*", element: <NotFound /> },
     ],
   },

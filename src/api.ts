@@ -1,4 +1,4 @@
-import type { Answers, AttemptSummary, BestAttempt, LeaderboardEntry, Me, PlayQuestion, Question, QuizCard, TagCount } from "../shared/types.ts";
+import type { Answers, AttemptSummary, BestAttempt, LeaderboardEntry, Me, PlayQuestion, Question, QuizCard, RoomMode, RoomState, TagCount } from "../shared/types.ts";
 import type { QuizInput } from "../shared/validate.ts";
 
 export class ApiError extends Error {
@@ -80,3 +80,20 @@ export const vote = (id: number | string, value: 1 | -1 | 0) =>
   request<{ score: number; myVote: number }>("PUT", `/api/quizzes/${id}/vote`, { value });
 export const getTags = (q = "") => request<TagCount[]>("GET", `/api/tags${q ? `?q=${encodeURIComponent(q)}` : ""}`);
 export const getMyAttempts = () => request<AttemptSummary[]>("GET", "/api/me/attempts");
+
+export type RoomAnswerResponse =
+  | { ok: true }
+  | { finished: false }
+  | { finished: true; correct: number; total: number; durationMs: number; questions: Question[] };
+
+export const createRoom = (input: { quizId: number; mode: RoomMode; questionSeconds?: number }) =>
+  request<{ code: string }>("POST", "/api/rooms", input);
+export const getRoom = (code: string) =>
+  request<{ state: RoomState; mode: RoomMode; you: { id: string; isHost: boolean } | null }>("GET", `/api/rooms/${encodeURIComponent(code)}`);
+export const joinRoom = (code: string, nickname: string) => request<{ ok: true }>("POST", `/api/rooms/${encodeURIComponent(code)}/join`, { nickname });
+export const roomQuestions = (code: string) => request<PlayQuestion[]>("GET", `/api/rooms/${encodeURIComponent(code)}/questions`);
+export const roomStart = (code: string) => request<{ ok: true }>("POST", `/api/rooms/${encodeURIComponent(code)}/start`);
+export const roomAnswer = (code: string, questionId: string, value: number | boolean) =>
+  request<RoomAnswerResponse>("POST", `/api/rooms/${encodeURIComponent(code)}/answer`, { questionId, value });
+export const roomNext = (code: string) => request<{ ok: true }>("POST", `/api/rooms/${encodeURIComponent(code)}/next`);
+export const roomEnd = (code: string) => request<{ ok: true }>("POST", `/api/rooms/${encodeURIComponent(code)}/end`);
