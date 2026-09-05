@@ -98,7 +98,8 @@ export function quizRoutes(db: Db): express.Router {
     authorize(row, me, false);
     const input = parseInput(req.body);
     const questionsJson = JSON.stringify(input.questions);
-    const bump = row.published === 1 && questionsJson !== row.questions ? 1 : 0;
+    // A quiz that has ever been published bumps on any question change, even while unpublished, so the leaderboard cannot outlive its answer key. Never-published drafts stay at version 1.
+    const bump = row.published_at !== null && questionsJson !== row.questions ? 1 : 0;
     tx(db, () => {
       db.prepare(
         "UPDATE quizzes SET title = ?, description = ?, questions = ?, version = version + ?, updated_at = ? WHERE id = ?"

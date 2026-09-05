@@ -1,8 +1,8 @@
 import type { Db } from "./db.ts";
 import type { BestAttempt, LeaderboardEntry } from "../shared/types.ts";
 
-// Best attempt first: most correct, then fastest, then earliest finish.
-const BEST_ORDER = "correct DESC, (finished_at - started_at) ASC, finished_at ASC";
+// Best attempt first: most correct, then fastest, then earliest finish, then id breaks any remaining tie.
+const BEST_ORDER = "correct DESC, (finished_at - started_at) ASC, finished_at ASC, id ASC";
 
 type BoardRow = {
   username: string;
@@ -25,7 +25,7 @@ export function leaderboardFor(db: Db, quizId: number, version: number): Leaderb
                      WHERE b.quiz_id = a.quiz_id AND b.quiz_version = a.quiz_version
                        AND b.user_id = a.user_id AND b.finished_at IS NOT NULL
                      ORDER BY ${BEST_ORDER} LIMIT 1)
-       ORDER BY a.correct DESC, duration_ms ASC, a.finished_at ASC
+       ORDER BY a.correct DESC, duration_ms ASC, a.finished_at ASC, a.id ASC
        LIMIT 10`
     )
     .all(quizId, version) as BoardRow[];

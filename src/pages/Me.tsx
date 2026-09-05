@@ -41,12 +41,14 @@ export function Me() {
       window.location.href = "/api/auth/github";
       return;
     }
-    Promise.all([getMyQuizzes(), getMyAttempts()])
-      .then(([quizzes, history]) => {
-        setData(quizzes);
-        setAttempts(history);
-      })
-      .catch((e: Error) => setError(e.message));
+    Promise.allSettled([getMyQuizzes(), getMyAttempts()]).then(([quizzes, attemptsResult]) => {
+      if (quizzes.status === "rejected") {
+        setError((quizzes.reason as Error).message);
+        return;
+      }
+      setData(quizzes.value);
+      setAttempts(attemptsResult.status === "fulfilled" ? attemptsResult.value : []);
+    });
   }, [loading, me]);
 
   if (error) return <ErrorBox message={error} />;

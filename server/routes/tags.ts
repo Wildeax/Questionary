@@ -6,8 +6,13 @@ export function tagRoutes(db: Db): express.Router {
   const r = express.Router();
 
   r.get("/tags", (req, res) => {
+    const raw = typeof req.query.q === "string" ? req.query.q.trim() : "";
     // Tags only ever contain [a-z0-9-], so stripping anything else also removes LIKE wildcards.
-    const q = typeof req.query.q === "string" ? req.query.q.trim().toLowerCase().replace(/[^a-z0-9-]/g, "") : "";
+    const q = raw.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    if (raw && !q) {
+      res.json([]);
+      return;
+    }
     const rows = db
       .prepare(
         `SELECT t.tag, COUNT(*) AS count

@@ -55,15 +55,15 @@ export function Quiz() {
     }
   }
 
-  function castVote(value: 1 | -1) {
+  const castVote = (value: 1 | -1) => {
     if (!me) {
       setVoteHint(true);
       return;
     }
-    if (!quiz) return;
+    setVoteHint(false);
     const next = quiz.myVote === value ? 0 : value;
     void act(() => vote(quiz.id, next));
-  }
+  };
 
   return (
     <>
@@ -82,6 +82,7 @@ export function Quiz() {
               onClick={() => castVote(1)}
               title={isAuthor ? "Authors cannot vote on their own quiz" : "Upvote"}
               aria-label="Upvote"
+              aria-pressed={quiz.myVote === 1}
               className={`rounded-md px-2 py-0.5 ${quiz.myVote === 1 ? "bg-emerald-600 text-white" : "bg-neutral-800 hover:bg-neutral-700"} disabled:opacity-50`}
             >
               ▲
@@ -92,6 +93,7 @@ export function Quiz() {
               onClick={() => castVote(-1)}
               title={isAuthor ? "Authors cannot vote on their own quiz" : "Downvote"}
               aria-label="Downvote"
+              aria-pressed={quiz.myVote === -1}
               className={`rounded-md px-2 py-0.5 ${quiz.myVote === -1 ? "bg-red-600 text-white" : "bg-neutral-800 hover:bg-neutral-700"} disabled:opacity-50`}
             >
               ▼

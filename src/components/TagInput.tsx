@@ -19,12 +19,12 @@ export function TagInput({ value, onChange }: { value: string[]; onChange: (tags
     }
     let alive = true;
     getTags(q)
-      .then((tags) => alive && setSuggestions(tags.filter((t) => !value.includes(t.tag))))
+      .then((tags) => alive && setSuggestions(tags))
       .catch(() => alive && setSuggestions([]));
     return () => {
       alive = false;
     };
-  }, [text, value]);
+  }, [text]);
 
   function add(raw: string) {
     try {
@@ -43,7 +43,15 @@ export function TagInput({ value, onChange }: { value: string[]; onChange: (tags
           {value.map((t) => (
             <span key={t} className={chip}>
               {t}
-              <button type="button" onClick={() => onChange(value.filter((x) => x !== t))} aria-label={`Remove ${t}`} className="text-neutral-400 hover:text-white">
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  onChange(value.filter((x) => x !== t));
+                }}
+                aria-label={`Remove ${t}`}
+                className="text-neutral-400 hover:text-white"
+              >
                 ×
               </button>
             </span>
@@ -53,7 +61,10 @@ export function TagInput({ value, onChange }: { value: string[]; onChange: (tags
       <input
         value={text}
         disabled={full}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          setError(null);
+        }}
         onKeyDown={(e) => {
           if ((e.key === "Enter" || e.key === ",") && text.trim()) {
             e.preventDefault();
@@ -66,7 +77,7 @@ export function TagInput({ value, onChange }: { value: string[]; onChange: (tags
       />
       {suggestions.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2">
-          {suggestions.map((s) => (
+          {suggestions.filter((s) => !value.includes(s.tag)).map((s) => (
             <button key={s.tag} type="button" onClick={() => add(s.tag)} className={`${chip} hover:bg-neutral-700`}>
               {s.tag} <span className="text-neutral-500">{s.count}</span>
             </button>

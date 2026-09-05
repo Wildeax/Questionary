@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS votes (
   value    INTEGER NOT NULL CHECK (value IN (-1, 1)),
   PRIMARY KEY (user_id, quiz_id)
 );
+CREATE INDEX IF NOT EXISTS votes_quiz ON votes(quiz_id);
 
 CREATE TABLE IF NOT EXISTS attempts (
   id            INTEGER PRIMARY KEY,
@@ -48,3 +49,4 @@ CREATE TABLE IF NOT EXISTS attempts (
 );
 CREATE INDEX IF NOT EXISTS attempts_board ON attempts(quiz_id, quiz_version, correct, finished_at);
 CREATE INDEX IF NOT EXISTS attempts_user  ON attempts(user_id, finished_at);
+CREATE INDEX IF NOT EXISTS attempts_best ON attempts(quiz_id, quiz_version, user_id);

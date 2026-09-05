@@ -122,6 +122,14 @@ describe("leaderboard", () => {
     assert.equal(anon.json.leaderboard.length, 3);
   });
 
+  it("ignores attempts that were started but not submitted", async () => {
+    const before = (await api(t.base, "GET", `/api/quizzes/${id}/leaderboard`)).json.length;
+    const start = await api(t.base, "POST", `/api/quizzes/${id}/attempts`, undefined, dave.cookie);
+    assert.equal(start.status, 201);
+    const after = (await api(t.base, "GET", `/api/quizzes/${id}/leaderboard`)).json.length;
+    assert.equal(after, before);
+  });
+
   it("resets when the author changes the questions", async () => {
     const changed = { title: "Board", questions: [{ ...sampleQuestions[0], answer: 0 }, sampleQuestions[1]] };
     await api(t.base, "PUT", `/api/quizzes/${id}`, changed, alice.cookie);
@@ -133,6 +141,16 @@ describe("leaderboard", () => {
     const after = await api(t.base, "GET", `/api/quizzes/${id}/leaderboard`);
     assert.equal(after.json.length, 1);
     assert.equal(after.json[0].username, "bob");
+  });
+
+  it("bumps the version when the author edits while unpublished", async () => {
+    await api(t.base, "POST", `/api/quizzes/${id}/unpublish`, undefined, alice.cookie);
+    const changed = { title: "Board", questions: [{ ...sampleQuestions[0], answer: 1 }, sampleQuestions[1]] };
+    const r = await api(t.base, "PUT", `/api/quizzes/${id}`, changed, alice.cookie);
+    assert.equal(r.json.version, 3);
+    await api(t.base, "POST", `/api/quizzes/${id}/publish`, undefined, alice.cookie);
+    const board = await api(t.base, "GET", `/api/quizzes/${id}/leaderboard`);
+    assert.deepEqual(board.json, []);
   });
 
   it("hides drafts", async () => {
