@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { deleteQuiz, getQuiz, publishQuiz, unpublishQuiz, type QuizDetail } from "../api.ts";
 import { useMe } from "../me.tsx";
@@ -14,18 +14,24 @@ export function Quiz() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const load = useCallback(
-    () =>
-      getQuiz(id!)
-        .then(setQuiz)
-        .catch((e: Error) => setError(e.message)),
-    [id]
-  );
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const load = () =>
+    getQuiz(id!)
+      .then(setQuiz)
+      .catch((e: Error) => setError(e.message));
 
-  if (error) return <ErrorBox message={error} />;
+  useEffect(() => {
+    let alive = true;
+    setQuiz(null);
+    setError(null);
+    getQuiz(id!)
+      .then((q) => alive && setQuiz(q))
+      .catch((e: Error) => alive && setError(e.message));
+    return () => {
+      alive = false;
+    };
+  }, [id]);
+
+  if (error && !quiz) return <ErrorBox message={error} />;
   if (!quiz) return <p className="text-neutral-400">Loading…</p>;
 
   // Only the author receives `published`; everyone else only ever sees published quizzes.
@@ -110,6 +116,7 @@ export function Quiz() {
           </button>
         )}
       </div>
+      {error && <ErrorBox message={error} />}
     </div>
   );
 }
