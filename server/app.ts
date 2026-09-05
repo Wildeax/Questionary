@@ -6,6 +6,7 @@ import { authRoutes } from "./routes/auth.ts";
 import { quizRoutes } from "./routes/quizzes.ts";
 import { playRoutes } from "./routes/play.ts";
 import { userRoutes } from "./routes/users.ts";
+import { tagRoutes } from "./routes/tags.ts";
 
 export function createApp(db: Db, config: Config): express.Express {
   const app = express();
@@ -15,6 +16,7 @@ export function createApp(db: Db, config: Config): express.Express {
   app.use("/api", quizRoutes(db));
   app.use("/api", playRoutes(db));
   app.use("/api", userRoutes(db));
+  app.use("/api", tagRoutes(db));
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found" });
   });
