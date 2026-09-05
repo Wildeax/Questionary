@@ -4,6 +4,7 @@ import { Local } from "./pages/Local.tsx";
 import { NotFound } from "./pages/NotFound.tsx";
 import { Catalog } from "./pages/Catalog.tsx";
 import { Quiz } from "./pages/Quiz.tsx";
+import { Play } from "./pages/Play.tsx";
 
 export const router = createBrowserRouter([
   {
@@ -13,6 +14,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Catalog /> },
       { path: "local", element: <Local /> },
       { path: "quiz/:id", element: <Quiz /> },
+      { path: "quiz/:id/play", element: <Play /> },
       { path: "*", element: <NotFound /> },
     ],
   },
