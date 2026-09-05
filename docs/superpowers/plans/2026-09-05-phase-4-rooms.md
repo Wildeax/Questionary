@@ -1165,10 +1165,11 @@ Claude-Session: https://claude.ai/code/session_01BxXovJBHEBSQVrspo5Wc4G"
 ### Task 4: Room page
 
 **Files:**
-- Modify: `src/pages/Room.tsx` (replace the placeholder), `README.md`
+- Modify: `src/pages/Room.tsx` (replace the placeholder), `src/components/QuestionPage.tsx` (optional `hidePrev` prop that leaves the Previous button out), `README.md`
 
 **Interfaces:**
 - Consumes: the room API functions, `RoomSnapshot`, `QuestionPage`, `ResultsView`, `ErrorBox`, `formatDuration`.
+- `QuestionPage` gains `hidePrev?: boolean`; when set, the Previous button is not rendered. Race mode passes it because answers are final.
 
 - [ ] **Step 1: Write src/pages/Room.tsx**
 
@@ -1198,8 +1199,13 @@ function useCountdown(until: number | undefined): number {
   return left;
 }
 
+/** Remounts the view per room code, so "Play again" starts with fresh state. */
 export function Room() {
   const { code = "" } = useParams();
+  return <RoomView key={code} code={code} />;
+}
+
+function RoomView({ code }: { code: string }) {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<"loading" | "missing" | "join" | "live">("loading");
   const [snapshot, setSnapshot] = useState<RoomSnapshot | null>(null);
@@ -1432,6 +1438,7 @@ export function Room() {
                 isAnswered={pending !== undefined}
                 onChange={setPending}
                 onPrev={() => undefined}
+                hidePrev
                 onNext={() => void submitRaceAnswer()}
                 onFinish={() => void submitRaceAnswer()}
                 onQuit={() => navigate(`/quiz/${snapshot.quiz.id}`)}
@@ -1517,10 +1524,10 @@ export function Room() {
         </div>
       )}
 
-      {snapshot.mode === "sync" && snapshot.state === "finished" && snapshot.ranking && (
+      {snapshot.mode === "sync" && snapshot.state === "finished" && (
         <div className={card}>
           <h1 className="text-2xl font-semibold mb-4">Final ranking</h1>
-          {board(snapshot.ranking, true)}
+          {board(snapshot.ranking ?? snapshot.players, true)}
           <div className="mt-6 flex gap-3">
             {isHost && (
               <button disabled={busy} onClick={() => void playAgain()} className={`${btn} bg-emerald-600 hover:bg-emerald-500 font-medium`}>
