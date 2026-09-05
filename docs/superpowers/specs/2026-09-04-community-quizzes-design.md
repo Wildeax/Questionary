@@ -305,7 +305,7 @@ type QuizCard = {
 | GET | `/api/quizzes?q=&tag=&sort=top|new|popular&page=` | none | published only. `q` is `LIKE '%q%'` on title and description. `tag` is an exact match. Both given means both must match. |
 | POST | `/api/quizzes` | user | body `{ title, description, tags, questions }`. Creates a draft. Returns `{ id }`. |
 | GET | `/api/quizzes/:id` | none | published: card plus `myVote` (0 if signed out), `leaderboard`, and `myBest` as `{ correct, total, durationMs }` or null. Author gets the full quiz too: `questions` with answers, `published`, `version`. Drafts return 404 to anyone but the author. |
-| PUT | `/api/quizzes/:id` | author | same body as POST. If published and the `questions` JSON changed, `version` increments. |
+| PUT | `/api/quizzes/:id` | author | same body as POST. If the quiz has ever been published (`published_at` set) and the `questions` JSON changed, `version` increments. Unpublishing to edit does not skip the bump. |
 | DELETE | `/api/quizzes/:id` | author, or admin if published | cascades tags, votes, attempts |
 | POST | `/api/quizzes/:id/publish` | author | sets `published=1`, `published_at=now` if null |
 | POST | `/api/quizzes/:id/unpublish` | author or admin | sets `published=0` |
@@ -628,7 +628,7 @@ comment at the spot in code.
 | Stateless HMAC session cookie | No logout-everywhere, no revocation before expiry | sessions table keyed by a random id |
 | Rooms in memory, single process | Restart drops live rooms, no horizontal scaling | rooms table plus polling, or Redis pub/sub |
 | `LIKE '%q%'` search | Full scan, no ranking | FTS5 virtual table on title and description |
-| Score and plays computed by subselect | Slower listing at tens of thousands of quizzes | counter columns updated by triggers |
+| Score and plays computed by subselect | With indexes on `votes(quiz_id)` and `attempts(quiz_id, ...)` each subselect is an index seek; the ceiling is tens of thousands of votes and attempts per quiz | counter columns updated by triggers |
 | No rate limiting | Abuse can hammer publish or grade | `limit_req` in nginx or Caddy |
 | Finished race players hold the answer key | Friends can share answers | withhold results until the room finishes |
 | Anonymous grading returns the full answer key | Anyone can read a published quiz's answers with one request and then submit a perfect attempt, so the leaderboard runs on trust | return per-question correctness and explanations without `answer` on the anonymous route, or require an attempt id for the full key |
