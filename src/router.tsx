@@ -2,14 +2,17 @@ import { createBrowserRouter } from "react-router";
 import { Layout } from "./components/Layout.tsx";
 import { Local } from "./pages/Local.tsx";
 import { NotFound } from "./pages/NotFound.tsx";
+import { Catalog } from "./pages/Catalog.tsx";
+import { Quiz } from "./pages/Quiz.tsx";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
     children: [
-      { index: true, element: <Local /> },
+      { index: true, element: <Catalog /> },
       { path: "local", element: <Local /> },
+      { path: "quiz/:id", element: <Quiz /> },
       { path: "*", element: <NotFound /> },
     ],
   },
