@@ -14,6 +14,7 @@ type QuestionPageProps = {
   onQuit: () => void;
   quizMetadata: QuizMetadata;
   submitting?: boolean;
+  hidePrev?: boolean;
 };
 
 export function QuestionPage({
@@ -29,6 +30,7 @@ export function QuestionPage({
   onQuit,
   quizMetadata,
   submitting,
+  hidePrev,
 }: QuestionPageProps) {
   return (
     <div className="min-h-[70vh] flex flex-col">
@@ -106,13 +108,15 @@ export function QuestionPage({
               >
                 Quit
               </button>
-              <button
-                onClick={onPrev}
-                disabled={index === 0}
-                className="rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 disabled:hover:bg-neutral-800"
-              >
-                Previous
-              </button>
+              {!hidePrev && (
+                <button
+                  onClick={onPrev}
+                  disabled={index === 0}
+                  className="rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 disabled:hover:bg-neutral-800"
+                >
+                  Previous
+                </button>
+              )}
             </div>
 
             <div>

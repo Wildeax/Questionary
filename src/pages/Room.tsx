@@ -25,6 +25,10 @@ function useCountdown(until: number | undefined): number {
 
 export function Room() {
   const { code = "" } = useParams();
+  return <RoomView key={code} code={code} />;
+}
+
+function RoomView({ code }: { code: string }) {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<"loading" | "missing" | "join" | "live">("loading");
   const [snapshot, setSnapshot] = useState<RoomSnapshot | null>(null);
@@ -262,6 +266,7 @@ export function Room() {
                 onQuit={() => navigate(`/quiz/${snapshot.quiz.id}`)}
                 quizMetadata={{ name: snapshot.quiz.title }}
                 submitting={busy}
+                hidePrev
               />
             ) : (
               <p className="text-neutral-400">Loading questions…</p>
@@ -342,10 +347,10 @@ export function Room() {
         </div>
       )}
 
-      {snapshot.mode === "sync" && snapshot.state === "finished" && snapshot.ranking && (
+      {snapshot.mode === "sync" && snapshot.state === "finished" && (
         <div className={card}>
           <h1 className="text-2xl font-semibold mb-4">Final ranking</h1>
-          {board(snapshot.ranking, true)}
+          {board(snapshot.ranking ?? snapshot.players, true)}
           <div className="mt-6 flex gap-3">
             {isHost && (
               <button disabled={busy} onClick={() => void playAgain()} className={`${btn} bg-emerald-600 hover:bg-emerald-500 font-medium`}>
