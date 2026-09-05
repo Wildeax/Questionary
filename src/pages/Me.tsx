@@ -1,16 +1,26 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { ClockCounterClockwise, Globe, NotePencil, PencilSimple, Plus, type Icon } from "@phosphor-icons/react";
 import type { AttemptSummary, QuizCard } from "../../shared/types.ts";
 import { getMyAttempts, getMyQuizzes, type MyQuizzes } from "../api.ts";
 import { useMe } from "../me.tsx";
 import { QuizCardView } from "../components/QuizCardView.tsx";
 import { ErrorBox } from "../components/ErrorBox.tsx";
+import { Loading } from "../components/Loading.tsx";
 import { formatDuration } from "../format.ts";
 
-function Section({ title, quizzes, empty }: { title: string; quizzes: QuizCard[]; empty: string }) {
+function Heading({ icon: HeadingIcon, children }: { icon: Icon; children: string }) {
+  return (
+    <h2 className="flex items-center gap-2 text-xl font-semibold mb-3">
+      <HeadingIcon className="text-neutral-400" aria-hidden /> {children}
+    </h2>
+  );
+}
+
+function Section({ title, icon, quizzes, empty }: { title: string; icon: Icon; quizzes: QuizCard[]; empty: string }) {
   return (
     <section className="mb-8">
-      <h2 className="text-xl font-semibold mb-3">{title}</h2>
+      <Heading icon={icon}>{title}</Heading>
       {quizzes.length === 0 ? (
         <p className="text-neutral-400 text-sm">{empty}</p>
       ) : (
@@ -18,8 +28,8 @@ function Section({ title, quizzes, empty }: { title: string; quizzes: QuizCard[]
           {quizzes.map((q) => (
             <div key={q.id}>
               <QuizCardView quiz={q} />
-              <Link to={`/quiz/${q.id}/edit`} className="mt-1 inline-block text-xs text-neutral-400 hover:text-neutral-200 underline">
-                Edit
+              <Link to={`/quiz/${q.id}/edit`} className="mt-1 inline-flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-200 underline">
+                <PencilSimple size={14} aria-hidden /> Edit
               </Link>
             </div>
           ))}
@@ -52,21 +62,21 @@ export function Me() {
   }, [loading, me]);
 
   if (error) return <ErrorBox message={error} />;
-  if (!data) return <p className="text-neutral-400">Loading…</p>;
+  if (!data) return <Loading />;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">My quizzes</h1>
-        <Link to="/new" className="rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-sm font-medium">
-          New quiz
+        <Link to="/new" className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-sm font-medium">
+          <Plus weight="bold" aria-hidden /> New quiz
         </Link>
       </div>
-      <Section title="Drafts" quizzes={data.drafts} empty="No drafts." />
-      <Section title="Published" quizzes={data.published} empty="Nothing published yet." />
+      <Section title="Drafts" icon={NotePencil} quizzes={data.drafts} empty="No drafts." />
+      <Section title="Published" icon={Globe} quizzes={data.published} empty="Nothing published yet." />
 
       <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3">History</h2>
+        <Heading icon={ClockCounterClockwise}>History</Heading>
         {!attempts || attempts.length === 0 ? (
           <p className="text-neutral-400 text-sm">No finished attempts yet.</p>
         ) : (

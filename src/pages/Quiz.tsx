@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { ArrowFatDown, ArrowFatUp, DownloadSimple, EyeSlash, ListChecks, Medal, PaperPlaneTilt, PencilSimple, Play, Star, Trash, Trophy, UsersThree } from "@phosphor-icons/react";
 import { deleteQuiz, getQuiz, publishQuiz, unpublishQuiz, vote, type QuizDetail } from "../api.ts";
 import { useMe } from "../me.tsx";
 import { ErrorBox } from "../components/ErrorBox.tsx";
+import { Loading } from "../components/Loading.tsx";
 import { formatDuration } from "../format.ts";
 
-const btn = "rounded-xl px-4 py-2 transition disabled:opacity-50";
+const btn = "inline-flex items-center gap-2 rounded-xl px-4 py-2 transition disabled:opacity-50";
+const MEDALS = ["text-amber-400", "text-neutral-300", "text-amber-700"];
 
 export function Quiz() {
   const { id } = useParams();
@@ -34,7 +37,7 @@ export function Quiz() {
   }, [id]);
 
   if (error && !quiz) return <ErrorBox message={error} />;
-  if (!quiz) return <p className="text-neutral-400">Loading…</p>;
+  if (!quiz) return <Loading />;
 
   // Only the author receives `published`; everyone else only ever sees published quizzes.
   const isPublished = quiz.published !== false;
@@ -83,9 +86,9 @@ export function Quiz() {
               title={isAuthor ? "Authors cannot vote on their own quiz" : "Upvote"}
               aria-label="Upvote"
               aria-pressed={quiz.myVote === 1}
-              className={`rounded-md px-2 py-0.5 ${quiz.myVote === 1 ? "bg-emerald-600 text-white" : "bg-neutral-800 hover:bg-neutral-700"} disabled:opacity-50`}
+              className={`rounded-md px-2 py-1 ${quiz.myVote === 1 ? "bg-emerald-600 text-white" : "bg-neutral-800 hover:bg-neutral-700"} disabled:opacity-50`}
             >
-              ▲
+              <ArrowFatUp weight={quiz.myVote === 1 ? "fill" : "duotone"} />
             </button>
             <span className="tabular-nums min-w-6 text-center text-neutral-200">{quiz.score}</span>
             <button
@@ -94,9 +97,9 @@ export function Quiz() {
               title={isAuthor ? "Authors cannot vote on their own quiz" : "Downvote"}
               aria-label="Downvote"
               aria-pressed={quiz.myVote === -1}
-              className={`rounded-md px-2 py-0.5 ${quiz.myVote === -1 ? "bg-red-600 text-white" : "bg-neutral-800 hover:bg-neutral-700"} disabled:opacity-50`}
+              className={`rounded-md px-2 py-1 ${quiz.myVote === -1 ? "bg-red-600 text-white" : "bg-neutral-800 hover:bg-neutral-700"} disabled:opacity-50`}
             >
-              ▼
+              <ArrowFatDown weight={quiz.myVote === -1 ? "fill" : "duotone"} />
             </button>
           </span>
           {voteHint && !me && (
@@ -107,8 +110,12 @@ export function Quiz() {
               to vote.
             </span>
           )}
-          <span>{quiz.questionCount} questions</span>
-          <span>{quiz.plays} plays</span>
+          <span className="inline-flex items-center gap-1">
+            <ListChecks aria-hidden /> {quiz.questionCount} questions
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Play aria-hidden /> {quiz.plays} plays
+          </span>
           {quiz.tags.map((t) => (
             <Link key={t} to={`/?tag=${encodeURIComponent(t)}`} className="rounded-md bg-neutral-800 px-1.5 py-0.5 hover:bg-neutral-700">
               {t}
@@ -118,27 +125,27 @@ export function Quiz() {
         <div className="mt-6 flex flex-wrap gap-3">
           {isPublished && (
             <Link to={`/quiz/${quiz.id}/play`} className={`${btn} bg-emerald-600 hover:bg-emerald-500 font-medium`}>
-              Play
+              <Play weight="fill" aria-hidden /> Play
             </Link>
           )}
           {isPublished && me && (
             <Link to={`/rooms/new?quiz=${quiz.id}`} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
-              Host a room
+              <UsersThree aria-hidden /> Host a room
             </Link>
           )}
           {isAuthor && (
             <Link to={`/quiz/${quiz.id}/edit`} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
-              Edit
+              <PencilSimple aria-hidden /> Edit
             </Link>
           )}
           {isAuthor && (
             <a href={`/api/quizzes/${quiz.id}/export`} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
-              Download YAML
+              <DownloadSimple aria-hidden /> Download YAML
             </a>
           )}
           {isAuthor && !isPublished && (
             <button disabled={busy} onClick={() => void act(() => publishQuiz(quiz.id))} className={`${btn} bg-emerald-600 hover:bg-emerald-500`}>
-              Publish
+              <PaperPlaneTilt aria-hidden /> Publish
             </button>
           )}
           {canModerate && isPublished && (
@@ -147,7 +154,7 @@ export function Quiz() {
               onClick={() => void act(() => unpublishQuiz(quiz.id), isAuthor ? undefined : () => navigate("/"))}
               className={`${btn} bg-neutral-800 hover:bg-neutral-700`}
             >
-              Unpublish
+              <EyeSlash aria-hidden /> Unpublish
             </button>
           )}
           {canModerate && (
@@ -160,7 +167,7 @@ export function Quiz() {
               }}
               className={`${btn} bg-red-600 hover:bg-red-500`}
             >
-              Delete
+              <Trash aria-hidden /> Delete
             </button>
           )}
         </div>
@@ -169,7 +176,9 @@ export function Quiz() {
 
       {isPublished && (
         <section className="mt-6 bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-xl font-semibold mb-3">Leaderboard</h2>
+          <h2 className="flex items-center gap-2 text-xl font-semibold mb-3">
+            <Trophy className="text-amber-400" aria-hidden /> Leaderboard
+          </h2>
           {quiz.leaderboard.length === 0 ? (
             <p className="text-sm text-neutral-400">
               {quiz.version > 1 ? "Leaderboard reset when the quiz was updated. No attempts on this version yet." : "No attempts yet."}
@@ -187,7 +196,9 @@ export function Quiz() {
               <tbody>
                 {quiz.leaderboard.map((e, i) => (
                   <tr key={e.username} className="border-t border-neutral-800">
-                    <td className="py-1.5 pr-3 tabular-nums">{i + 1}</td>
+                    <td className="py-1.5 pr-3 tabular-nums">
+                      {i < 3 ? <Medal weight="fill" className={MEDALS[i]} aria-label={`Rank ${i + 1}`} /> : i + 1}
+                    </td>
                     <td className="py-1.5 pr-3">
                       <Link to={`/u/${e.username}`} className="inline-flex items-center gap-2 hover:text-white">
                         <img src={e.avatarUrl} alt="" className="h-5 w-5 rounded-full bg-neutral-800" />
@@ -204,8 +215,11 @@ export function Quiz() {
             </table>
           )}
           {quiz.myBest && (
-            <p className="mt-3 text-sm text-neutral-400">
-              Your best: {quiz.myBest.correct}/{quiz.myBest.total} in {formatDuration(quiz.myBest.durationMs)}
+            <p className="mt-3 flex items-center gap-1.5 text-sm text-neutral-400">
+              <Star className="text-amber-400" aria-hidden />
+              <span>
+                Your best: {quiz.myBest.correct}/{quiz.myBest.total} in {formatDuration(quiz.myBest.durationMs)}
+              </span>
             </p>
           )}
         </section>

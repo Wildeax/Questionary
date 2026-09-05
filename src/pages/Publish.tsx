@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { dump } from "js-yaml";
+import { DownloadSimple, FileArrowUp, FileCode, FloppyDisk, ListChecks, PaperPlaneTilt, PencilLine, UploadSimple } from "@phosphor-icons/react";
 import type { Question, QuizMetadata } from "../../shared/types.ts";
 import { parseQuestionsFromText, validateQuizInput, type QuizInput } from "../../shared/validate.ts";
 import { quizDocument, slugify } from "../../shared/document.ts";
@@ -13,7 +14,7 @@ import { TagInput } from "../components/TagInput.tsx";
 import { Editor } from "../components/Editor.tsx";
 
 const field = "w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40";
-const btn = "inline-flex items-center justify-center rounded-xl px-4 py-2 transition disabled:opacity-50";
+const btn = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 transition disabled:opacity-50";
 const UNTITLED = "Untitled quiz";
 
 export function Publish() {
@@ -166,6 +167,11 @@ export function Publish() {
     }
   }
 
+  const MODES = [
+    ["upload", "Upload", UploadSimple],
+    ["editor", "Editor", PencilLine],
+  ] as const;
+
   return (
     <div className="max-w-3xl mx-auto bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
       <h1 className="text-2xl font-semibold mb-4">{editing ? "Edit quiz" : "New quiz"}</h1>
@@ -182,15 +188,15 @@ export function Publish() {
       <div className="mt-4 flex items-center gap-2">
         <span className="text-sm text-neutral-300">Questions</span>
         <div className="ml-auto flex rounded-xl bg-neutral-950 border border-neutral-800 p-0.5 text-sm">
-          {(["upload", "editor"] as const).map((m) => (
+          {MODES.map(([m, label, ModeIcon]) => (
             <button
               key={m}
               type="button"
               onClick={() => switchMode(m)}
               aria-pressed={mode === m}
-              className={`rounded-lg px-3 py-1 ${mode === m ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-neutral-200"}`}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 ${mode === m ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-neutral-200"}`}
             >
-              {m === "upload" ? "Upload" : "Editor"}
+              <ModeIcon aria-hidden /> {label}
             </button>
           ))}
         </div>
@@ -213,12 +219,15 @@ export function Publish() {
                   if (f) onFile(f);
                 }}
               />
-              Upload file
+              <FileArrowUp aria-hidden /> Upload file
             </label>
             <button onClick={() => onTextChange(getTemplate("yaml"))} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
-              Insert YAML template
+              <FileCode aria-hidden /> Insert YAML template
             </button>
-            <span className="text-neutral-400">{count === null ? "No valid questions yet" : `${count} question${count === 1 ? "" : "s"} loaded`}</span>
+            <span className="inline-flex items-center gap-1.5 text-neutral-400">
+              <ListChecks aria-hidden />
+              {count === null ? "No valid questions yet" : `${count} question${count === 1 ? "" : "s"} loaded`}
+            </span>
           </div>
         </>
       ) : (
@@ -232,9 +241,10 @@ export function Publish() {
           />
           <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
             <button type="button" onClick={downloadYaml} disabled={questions.length === 0} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
-              Download YAML
+              <DownloadSimple aria-hidden /> Download YAML
             </button>
-            <span className="text-neutral-400">
+            <span className="inline-flex items-center gap-1.5 text-neutral-400">
+              <ListChecks aria-hidden />
               {questions.length} question{questions.length === 1 ? "" : "s"}
             </span>
           </div>
@@ -245,11 +255,11 @@ export function Publish() {
 
       <div className="mt-6 flex flex-wrap gap-3">
         <button disabled={busy} onClick={() => void save(false)} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
-          {published ? "Save" : "Save draft"}
+          <FloppyDisk aria-hidden /> {published ? "Save" : "Save draft"}
         </button>
         {!published && (
           <button disabled={busy} onClick={() => void save(true)} className={`${btn} bg-emerald-600 hover:bg-emerald-500 font-medium`}>
-            Publish
+            <PaperPlaneTilt aria-hidden /> Publish
           </button>
         )}
       </div>

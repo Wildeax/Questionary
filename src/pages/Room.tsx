@@ -1,14 +1,36 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import {
+  ArrowCounterClockwise,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle,
+  Copy,
+  Crown,
+  DoorOpen,
+  FlagCheckered,
+  HourglassMedium,
+  Lightning,
+  Medal,
+  Play,
+  SignIn,
+  Timer,
+  Trophy,
+  UsersThree,
+  WifiSlash,
+} from "@phosphor-icons/react";
 import type { Answers, PlayQuestion, Question, RoomPlayerView, RoomSnapshot } from "../../shared/types.ts";
 import { ApiError, createRoom, getRoom, joinRoom, roomAnswer, roomEnd, roomNext, roomQuestions, roomStart } from "../api.ts";
 import { QuestionPage } from "../components/QuestionPage.tsx";
 import { ResultsView } from "../components/ResultsView.tsx";
 import { ErrorBox } from "../components/ErrorBox.tsx";
+import { Loading } from "../components/Loading.tsx";
 import { formatDuration } from "../format.ts";
 
 const card = "bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl";
-const btn = "rounded-xl px-4 py-2 transition disabled:opacity-50";
+const btn = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 transition disabled:opacity-50";
+const MEDALS = ["text-amber-400", "text-neutral-300", "text-amber-700"];
 
 /** Ticks every 250 ms while `until` is in the future; returns whole seconds left. */
 function useCountdown(until: number | undefined): number {
@@ -21,6 +43,28 @@ function useCountdown(until: number | undefined): number {
     return () => clearInterval(t);
   }, [until]);
   return left;
+}
+
+/** Copies the room code; shows a check for two seconds afterwards. */
+function CopyCode({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        navigator.clipboard?.writeText(code).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        });
+      }}
+      aria-label="Copy room code"
+      title="Copy room code"
+      className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs bg-neutral-800 hover:bg-neutral-700"
+    >
+      {copied ? <Check weight="bold" className="text-emerald-400" /> : <Copy />}
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
 }
 
 export function Room() {
@@ -162,13 +206,14 @@ function RoomView({ code }: { code: string }) {
   const countdown = useCountdown(snapshot?.state === "countdown" ? snapshot.countdownEndsAt : undefined);
   const questionLeft = useCountdown(snapshot?.state === "question" ? snapshot.question?.endsAt : undefined);
 
-  if (phase === "loading") return <p className="text-neutral-400">Loading…</p>;
+  if (phase === "loading") return <Loading />;
   if (phase === "missing") {
     return (
-      <div className={card}>
+      <div className={`${card} flex flex-col items-center gap-3 text-center`}>
+        <DoorOpen size={48} className="text-neutral-500" aria-hidden />
         <p>Room not found or expired.</p>
-        <Link to="/" className="underline text-sm text-neutral-400">
-          Back to the catalog
+        <Link to="/" className="inline-flex items-center gap-1 underline text-sm text-neutral-400">
+          <ArrowLeft aria-hidden /> Back to the catalog
         </Link>
       </div>
     );
@@ -176,7 +221,9 @@ function RoomView({ code }: { code: string }) {
   if (phase === "join") {
     return (
       <div className={`${card} max-w-md mx-auto`}>
-        <h1 className="text-2xl font-semibold">Join room {code.toUpperCase()}</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-semibold">
+          <SignIn className="text-emerald-400" aria-hidden /> Join room {code.toUpperCase()}
+        </h1>
         <label className="block mt-4 text-sm text-neutral-300">
           Nickname
           <input
@@ -190,22 +237,25 @@ function RoomView({ code }: { code: string }) {
         </label>
         {error && <ErrorBox message={error} />}
         <button disabled={busy || !nickname.trim()} onClick={() => void join()} className={`${btn} mt-4 bg-emerald-600 hover:bg-emerald-500 font-medium`}>
-          Join
+          <SignIn aria-hidden /> Join
         </button>
       </div>
     );
   }
-  if (!snapshot) return <p className="text-neutral-400">Connecting…</p>;
+  if (!snapshot) return <Loading label="Connecting" />;
 
   const isHost = snapshot.you?.isHost === true;
   const total = snapshot.quiz.questionCount;
+  const finished = snapshot.state === "finished";
 
   const board = (players: RoomPlayerView[], showPoints: boolean) => (
     <table className="w-full text-sm">
       <tbody>
         {players.map((p, i) => (
           <tr key={p.id} className="border-t border-neutral-800">
-            <td className="py-1.5 pr-3 tabular-nums text-neutral-400">{i + 1}</td>
+            <td className="py-1.5 pr-3 tabular-nums text-neutral-400">
+              {finished && i < 3 ? <Medal weight="fill" className={MEDALS[i]} aria-label={`Rank ${i + 1}`} /> : i + 1}
+            </td>
             <td className="py-1.5 pr-3">
               {p.nickname}
               {p.id === snapshot.you?.id && <span className="text-neutral-500"> (you)</span>}
@@ -225,53 +275,67 @@ function RoomView({ code }: { code: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between text-sm text-neutral-400">
-        <span>
-          Room <span className="font-mono text-neutral-200">{snapshot.code}</span> · {snapshot.quiz.title} · {snapshot.mode === "race" ? "Race" : "Synchronized"}
+      <div className="flex items-center justify-between gap-3 text-sm text-neutral-400">
+        <span className="inline-flex items-center gap-2">
+          {snapshot.mode === "race" ? <Lightning aria-hidden /> : <Timer aria-hidden />}
+          <span>
+            Room <span className="font-mono text-neutral-200">{snapshot.code}</span> · {snapshot.quiz.title} · {snapshot.mode === "race" ? "Race" : "Synchronized"}
+          </span>
         </span>
-        {!connected && <span className="text-amber-400">Reconnecting…</span>}
+        {!connected && (
+          <span className="inline-flex items-center gap-1 text-amber-400">
+            <WifiSlash aria-hidden /> Reconnecting…
+          </span>
+        )}
       </div>
       {error && <ErrorBox message={error} />}
 
       {snapshot.state === "lobby" && (
         <div className={card}>
-          <h1 className="text-2xl font-semibold">Waiting for players</h1>
-          <p className="mt-2 text-neutral-400">
+          <h1 className="flex items-center gap-2 text-2xl font-semibold">
+            <UsersThree className="text-emerald-400" aria-hidden /> Waiting for players
+          </h1>
+          <p className="mt-2 flex flex-wrap items-center gap-3 text-neutral-400">
             Share this code: <span className="font-mono text-3xl text-white tracking-widest">{snapshot.code}</span>
+            <CopyCode code={snapshot.code} />
           </p>
           <ul className="mt-4 flex flex-wrap gap-2">
             {snapshot.players.map((p) => (
-              <li key={p.id} className="rounded-md bg-neutral-800 px-2 py-1 text-sm">
+              <li key={p.id} className="inline-flex items-center gap-1 rounded-md bg-neutral-800 px-2 py-1 text-sm">
+                {p.nickname === snapshot.host && <Crown weight="fill" size={14} className="text-amber-400" aria-label="Host" />}
                 {p.nickname}
-                {p.nickname === snapshot.host && <span className="text-neutral-500"> (host)</span>}
               </li>
             ))}
           </ul>
           {isHost ? (
             <button disabled={busy} onClick={() => void act(() => roomStart(code))} className={`${btn} mt-6 bg-emerald-600 hover:bg-emerald-500 font-medium`}>
-              Start
+              <Play weight="fill" aria-hidden /> Start
             </button>
           ) : (
-            <p className="mt-6 text-sm text-neutral-400">Waiting for {snapshot.host} to start.</p>
+            <p className="mt-6 inline-flex items-center gap-2 text-sm text-neutral-400">
+              <HourglassMedium aria-hidden /> Waiting for {snapshot.host} to start.
+            </p>
           )}
         </div>
       )}
 
       {snapshot.state === "countdown" && (
         <div className={`${card} text-center`}>
-          <p className="text-neutral-400">Get ready</p>
+          <p className="inline-flex items-center gap-2 text-neutral-400">
+            <Timer aria-hidden /> Get ready
+          </p>
           <p className="text-7xl font-bold tabular-nums">{countdown}</p>
         </div>
       )}
 
-      {snapshot.mode === "race" && (snapshot.state === "running" || snapshot.state === "finished") && (
+      {snapshot.mode === "race" && (snapshot.state === "running" || finished) && (
         <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
           <div>
             {results ? (
               <ResultsView questions={results.questions} answers={results.answers} onRestart={() => void playAgain()} onExit={() => navigate(`/quiz/${snapshot.quiz.id}`)} exitLabel="Back to quiz" />
-            ) : snapshot.state === "finished" && !results ? (
-              <div className={card}>
-                <p>The race is over.</p>
+            ) : finished && !results ? (
+              <div className={`${card} inline-flex items-center gap-2`}>
+                <FlagCheckered aria-hidden /> The race is over.
               </div>
             ) : questions ? (
               <QuestionPage
@@ -290,20 +354,23 @@ function RoomView({ code }: { code: string }) {
                 hidePrev
               />
             ) : (
-              <p className="text-neutral-400">Loading questions…</p>
+              <Loading label="Loading questions" />
             )}
           </div>
           <aside className={card}>
-            <h2 className="font-semibold mb-2">{snapshot.state === "finished" ? "Final ranking" : "Progress"}</h2>
+            <h2 className="flex items-center gap-2 font-semibold mb-2">
+              {finished ? <Trophy className="text-amber-400" aria-hidden /> : <Lightning className="text-emerald-400" aria-hidden />}
+              {finished ? "Final ranking" : "Progress"}
+            </h2>
             {board(snapshot.ranking ?? snapshot.players, false)}
             {isHost && snapshot.state === "running" && (
               <button disabled={busy} onClick={() => void act(() => roomEnd(code))} className={`${btn} mt-4 w-full bg-neutral-800 hover:bg-neutral-700 text-sm`}>
-                End race
+                <FlagCheckered aria-hidden /> End race
               </button>
             )}
-            {isHost && snapshot.state === "finished" && (
+            {isHost && finished && (
               <button disabled={busy} onClick={() => void playAgain()} className={`${btn} mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-sm`}>
-                Play again
+                <ArrowCounterClockwise aria-hidden /> Play again
               </button>
             )}
           </aside>
@@ -316,14 +383,18 @@ function RoomView({ code }: { code: string }) {
             <span>
               Question {snapshot.question.index + 1} of {total}
             </span>
-            <span className="tabular-nums">{questionLeft}s</span>
+            <span className="inline-flex items-center gap-1 tabular-nums">
+              <Timer aria-hidden /> {questionLeft}s
+            </span>
           </div>
           <div className="h-2 w-full bg-neutral-800 rounded-full overflow-hidden mb-4">
             <div className="h-full bg-emerald-500 transition-all duration-200" style={{ width: `${Math.min(100, (questionLeft / snapshot.questionSeconds) * 100)}%` }} />
           </div>
           <h2 className="text-2xl font-semibold mb-4">{snapshot.question.prompt}</h2>
           {snapshot.you?.answered.includes(snapshot.question.id) ? (
-            <p className="text-neutral-400">Answered. Waiting for the others…</p>
+            <p className="inline-flex items-center gap-2 text-neutral-400">
+              <HourglassMedium aria-hidden /> Answered. Waiting for the others…
+            </p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {(snapshot.question.type === "mc" ? snapshot.question.options ?? [] : ["True", "False"]).map((label, i) => {
@@ -341,7 +412,9 @@ function RoomView({ code }: { code: string }) {
               })}
             </div>
           )}
-          <p className="mt-4 text-xs text-neutral-500">{snapshot.players.filter((p) => p.answeredCurrent).length} of {snapshot.players.length} answered</p>
+          <p className="mt-4 inline-flex items-center gap-1 text-xs text-neutral-500">
+            <UsersThree aria-hidden /> {snapshot.players.filter((p) => p.answeredCurrent).length} of {snapshot.players.length} answered
+          </p>
         </div>
       )}
 
@@ -351,35 +424,50 @@ function RoomView({ code }: { code: string }) {
             Question {snapshot.question.index + 1} of {total}
           </p>
           <h2 className="text-2xl font-semibold mt-1">{snapshot.question.prompt}</h2>
-          <p className="mt-3">
-            Correct answer:{" "}
-            <span className="text-emerald-400 font-medium">
-              {snapshot.question.type === "mc" ? snapshot.question.options?.[snapshot.reveal.answer as number] : snapshot.reveal.answer ? "True" : "False"}
+          <p className="mt-3 flex items-center gap-2">
+            <CheckCircle weight="fill" className="text-emerald-400" aria-hidden />
+            <span>
+              Correct answer:{" "}
+              <span className="text-emerald-400 font-medium">
+                {snapshot.question.type === "mc" ? snapshot.question.options?.[snapshot.reveal.answer as number] : snapshot.reveal.answer ? "True" : "False"}
+              </span>
             </span>
           </p>
           {snapshot.reveal.explanation && <p className="mt-1 text-neutral-300">{snapshot.reveal.explanation}</p>}
-          <h3 className="mt-6 font-semibold mb-2">Scoreboard</h3>
+          <h3 className="mt-6 flex items-center gap-2 font-semibold mb-2">
+            <Trophy className="text-amber-400" aria-hidden /> Scoreboard
+          </h3>
           {board(snapshot.reveal.scoreboard, true)}
           {isHost && (
             <button disabled={busy} onClick={() => void act(() => roomNext(code))} className={`${btn} mt-6 bg-emerald-600 hover:bg-emerald-500 font-medium`}>
-              {snapshot.question.index + 1 < total ? "Next question" : "Show final ranking"}
+              {snapshot.question.index + 1 < total ? (
+                <>
+                  Next question <ArrowRight aria-hidden />
+                </>
+              ) : (
+                <>
+                  <Trophy aria-hidden /> Show final ranking
+                </>
+              )}
             </button>
           )}
         </div>
       )}
 
-      {snapshot.mode === "sync" && snapshot.state === "finished" && (
+      {snapshot.mode === "sync" && finished && (
         <div className={card}>
-          <h1 className="text-2xl font-semibold mb-4">Final ranking</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold mb-4">
+            <Trophy className="text-amber-400" aria-hidden /> Final ranking
+          </h1>
           {board(snapshot.ranking ?? snapshot.players, true)}
           <div className="mt-6 flex gap-3">
             {isHost && (
               <button disabled={busy} onClick={() => void playAgain()} className={`${btn} bg-emerald-600 hover:bg-emerald-500 font-medium`}>
-                Play again
+                <ArrowCounterClockwise aria-hidden /> Play again
               </button>
             )}
             <Link to={`/quiz/${snapshot.quiz.id}`} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
-              Back to quiz
+              <ArrowLeft aria-hidden /> Back to quiz
             </Link>
           </div>
         </div>

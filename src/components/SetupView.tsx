@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { BracketsCurly, ClipboardText, FileArrowUp, FileCode } from "@phosphor-icons/react";
 import { getTemplate } from "../templates.ts";
 import type { SavedQuizState } from "../../shared/types.ts";
 import { SavedQuizCard } from "./SavedQuizCard.tsx";
+import { ErrorBox } from "./ErrorBox.tsx";
 
 type SetupProps = {
   error: string | null;
@@ -12,7 +14,9 @@ type SetupProps = {
   onClearSaved: () => void;
 };
 
-export function SetupView({ error, onPasteLoad, onFileSelected: _onFileSelected, savedQuiz, onResume, onClearSaved }: SetupProps) {
+const secondary = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 transition cursor-pointer";
+
+export function SetupView({ error, onPasteLoad, onFileSelected, savedQuiz, onResume, onClearSaved }: SetupProps) {
   const [text, setText] = useState("");
 
   return (
@@ -21,7 +25,9 @@ export function SetupView({ error, onPasteLoad, onFileSelected: _onFileSelected,
 
       <div className="max-w-3xl w-full">
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-xl font-semibold mb-2">Play a quiz file (offline)</h2>
+          <h2 className="flex items-center gap-2 text-xl font-semibold mb-2">
+            <FileArrowUp className="text-emerald-400" aria-hidden /> Play a quiz file (offline)
+          </h2>
           <p className="text-sm text-neutral-400 mb-4">
             Paste your document below or upload a .json / .yaml / .yml file. Nothing is sent to the server. Documents must start with metadata containing a required title and optional author. The quiz supports
             <span className="mx-1 font-mono text-neutral-200">mc</span> (multiple choice) and
@@ -40,50 +46,34 @@ export function SetupView({ error, onPasteLoad, onFileSelected: _onFileSelected,
           <div className="mt-4 flex flex-col sm:flex-row items-stretch gap-3">
             <button
               onClick={() => onPasteLoad(text)}
-              className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition font-medium"
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition font-medium"
             >
-              Load from Paste
+              <ClipboardText aria-hidden /> Load from Paste
             </button>
 
-            <label className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 cursor-pointer">
+            <label className={secondary}>
               <input
                 type="file"
                 accept=".json,.yaml,.yml,application/json,application/x-yaml,text/yaml,text/x-yaml"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) _onFileSelected(f);
+                  if (f) onFileSelected(f);
                 }}
               />
-              Upload File
+              <FileArrowUp aria-hidden /> Upload File
             </label>
 
-            <button
-              onClick={() => {
-                const template = getTemplate("yaml");
-                setText(template);
-              }}
-              className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 transition"
-            >
-              Insert YAML Template
+            <button onClick={() => setText(getTemplate("yaml"))} className={secondary}>
+              <FileCode aria-hidden /> Insert YAML Template
             </button>
 
-            <button
-              onClick={() => {
-                const template = getTemplate("json");
-                setText(template);
-              }}
-              className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 transition"
-            >
-              Insert JSON Template
+            <button onClick={() => setText(getTemplate("json"))} className={secondary}>
+              <BracketsCurly aria-hidden /> Insert JSON Template
             </button>
           </div>
 
-          {error && (
-            <div className="mt-4 text-sm text-red-400 whitespace-pre-wrap">
-              {error}
-            </div>
-          )}
+          {error && <ErrorBox message={error} />}
         </div>
       </div>
     </div>

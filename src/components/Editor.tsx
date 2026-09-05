@@ -1,8 +1,9 @@
+import { ArrowDown, ArrowUp, Plus, PlusCircle, Trash, X } from "@phosphor-icons/react";
 import type { Question } from "../../shared/types.ts";
 import { addOption, blankQuestion, move, removeOption, renumber, switchType, withOption } from "../../shared/editor.ts";
 
 const field = "w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40";
-const small = "rounded-lg px-2 py-1 text-xs bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40";
+const small = "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40";
 
 export function Editor({ value, onChange }: { value: Question[]; onChange: (questions: Question[]) => void }) {
   const emit = (next: Question[]) => onChange(renumber(next));
@@ -24,14 +25,14 @@ export function Editor({ value, onChange }: { value: Question[]; onChange: (ques
                 <option value="mc">Multiple choice</option>
                 <option value="tf">True / false</option>
               </select>
-              <button type="button" onClick={() => emit(move(value, i, -1))} disabled={i === 0} aria-label="Move up" className={small}>
-                ↑
+              <button type="button" onClick={() => emit(move(value, i, -1))} disabled={i === 0} aria-label="Move up" title="Move up" className={small}>
+                <ArrowUp size={14} weight="bold" />
               </button>
-              <button type="button" onClick={() => emit(move(value, i, 1))} disabled={i === value.length - 1} aria-label="Move down" className={small}>
-                ↓
+              <button type="button" onClick={() => emit(move(value, i, 1))} disabled={i === value.length - 1} aria-label="Move down" title="Move down" className={small}>
+                <ArrowDown size={14} weight="bold" />
               </button>
-              <button type="button" onClick={() => emit(value.filter((_, j) => j !== i))} aria-label="Delete question" className={`${small} text-red-300`}>
-                Delete
+              <button type="button" onClick={() => emit(value.filter((_, j) => j !== i))} aria-label="Delete question" title="Delete question" className={`${small} text-red-300`}>
+                <Trash size={14} />
               </button>
             </div>
           </div>
@@ -63,12 +64,12 @@ export function Editor({ value, onChange }: { value: Question[]; onChange: (ques
                     className={field}
                   />
                   <button type="button" onClick={() => replace(i, removeOption(q, k))} disabled={q.options.length <= 2} aria-label={`Remove option ${k + 1}`} className={small}>
-                    ×
+                    <X size={14} weight="bold" />
                   </button>
                 </div>
               ))}
               <button type="button" onClick={() => replace(i, addOption(q))} className={small}>
-                Add option
+                <Plus size={14} weight="bold" aria-hidden /> Add option
               </button>
             </div>
           ) : (
@@ -90,8 +91,8 @@ export function Editor({ value, onChange }: { value: Question[]; onChange: (ques
           />
         </div>
       ))}
-      <button type="button" onClick={() => emit([...value, blankQuestion(value.length)])} className="rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-sm">
-        Add question
+      <button type="button" onClick={() => emit([...value, blankQuestion(value.length)])} className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-sm">
+        <PlusCircle aria-hidden /> Add question
       </button>
     </div>
   );

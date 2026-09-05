@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import { ArrowCounterClockwise } from "@phosphor-icons/react";
 import type { Answers, PlayQuizData, Question, SavedQuizState } from "../../shared/types.ts";
 import { ApiError, getPlay, gradeAnonymous, startAttempt, submitAttempt } from "../api.ts";
 import { clearQuizProgress, getSavedQuiz } from "../storage.ts";
@@ -7,6 +8,7 @@ import { useMe } from "../me.tsx";
 import { QuizRunner } from "../components/QuizRunner.tsx";
 import { SavedQuizCard } from "../components/SavedQuizCard.tsx";
 import { ErrorBox } from "../components/ErrorBox.tsx";
+import { Loading } from "../components/Loading.tsx";
 
 type Phase =
   | { kind: "loading" }
@@ -73,14 +75,14 @@ export function Play() {
     }
   }
 
-  if (phase.kind === "loading") return <p className="text-neutral-400">Loading…</p>;
+  if (phase.kind === "loading") return <Loading />;
   if (phase.kind === "error") return <ErrorBox message={phase.message} />;
   if (phase.kind === "stale") {
     return (
       <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
         <p className="text-neutral-200">This attempt can no longer be submitted. The quiz was updated by its author or removed.</p>
-        <button onClick={() => void start()} className="mt-4 rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500">
-          Start over
+        <button onClick={() => void start()} className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500">
+          <ArrowCounterClockwise aria-hidden /> Start over
         </button>
       </div>
     );

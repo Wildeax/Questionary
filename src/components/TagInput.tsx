@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Tag, X } from "@phosphor-icons/react";
 import type { TagCount } from "../../shared/types.ts";
 import { MAX_TAGS, normalizeTags } from "../../shared/validate.ts";
 import { getTags } from "../api.ts";
@@ -42,6 +43,7 @@ export function TagInput({ value, onChange }: { value: string[]; onChange: (tags
         <div className="flex flex-wrap gap-2 mb-2">
           {value.map((t) => (
             <span key={t} className={chip}>
+              <Tag size={14} className="text-neutral-400" aria-hidden />
               {t}
               <button
                 type="button"
@@ -52,7 +54,7 @@ export function TagInput({ value, onChange }: { value: string[]; onChange: (tags
                 aria-label={`Remove ${t}`}
                 className="text-neutral-400 hover:text-white"
               >
-                ×
+                <X size={14} weight="bold" />
               </button>
             </span>
           ))}

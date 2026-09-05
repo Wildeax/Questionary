@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { Lightning, Timer, UsersThree } from "@phosphor-icons/react";
 import type { RoomMode } from "../../shared/types.ts";
 import { createRoom, getQuiz, type QuizDetail } from "../api.ts";
 import { useMe } from "../me.tsx";
 import { ErrorBox } from "../components/ErrorBox.tsx";
+import { Loading } from "../components/Loading.tsx";
+
+const MODES = [
+  ["race", "Race", Lightning, "Everyone starts together and answers at their own pace. Most correct wins, fastest breaks ties."],
+  ["sync", "Synchronized", Timer, "One question at a time with a timer. Faster correct answers score more."],
+] as const;
 
 export function RoomNew() {
   const [params] = useSearchParams();
@@ -44,24 +51,22 @@ export function RoomNew() {
   }
 
   if (error && !quiz) return <ErrorBox message={error} />;
-  if (!quiz) return <p className="text-neutral-400">Loading…</p>;
+  if (!quiz) return <Loading />;
 
   return (
     <div className="max-w-xl mx-auto bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
-      <h1 className="text-2xl font-semibold">Host a room</h1>
+      <h1 className="flex items-center gap-2 text-2xl font-semibold">
+        <UsersThree className="text-emerald-400" aria-hidden /> Host a room
+      </h1>
       <p className="mt-1 text-neutral-400">
         {quiz.title} · {quiz.questionCount} questions
       </p>
       <div className="mt-6 space-y-3">
-        {(
-          [
-            ["race", "Race", "Everyone starts together and answers at their own pace. Most correct wins, fastest breaks ties."],
-            ["sync", "Synchronized", "One question at a time with a timer. Faster correct answers score more."],
-          ] as const
-        ).map(([value, label, help]) => (
+        {MODES.map(([value, label, ModeIcon, help]) => (
           <label key={value} className={`block rounded-xl border p-4 cursor-pointer ${mode === value ? "border-emerald-500 bg-emerald-500/10" : "border-neutral-800 hover:border-neutral-700"}`}>
             <div className="flex items-center gap-3">
               <input type="radio" name="mode" value={value} checked={mode === value} onChange={() => setMode(value)} className="accent-emerald-500" />
+              <ModeIcon size={22} weight={mode === value ? "fill" : "duotone"} className={mode === value ? "text-emerald-400" : "text-neutral-400"} aria-hidden />
               <span className="font-medium">{label}</span>
             </div>
             <p className="mt-1 text-sm text-neutral-400">{help}</p>
@@ -77,13 +82,13 @@ export function RoomNew() {
             max={120}
             value={seconds}
             onChange={(e) => setSeconds(Math.min(120, Math.max(5, Number(e.target.value) || 20)))}
-            className="mt-1 w-32 bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-sm"
+            className="mt-1 block w-32 bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-sm"
           />
         </label>
       )}
       {error && <ErrorBox message={error} />}
-      <button disabled={busy} onClick={() => void create()} className="mt-6 rounded-xl px-6 py-2 bg-emerald-600 hover:bg-emerald-500 font-medium disabled:opacity-50">
-        Create room
+      <button disabled={busy} onClick={() => void create()} className="mt-6 inline-flex items-center gap-2 rounded-xl px-6 py-2 bg-emerald-600 hover:bg-emerald-500 font-medium disabled:opacity-50">
+        <UsersThree aria-hidden /> Create room
       </button>
     </div>
   );
