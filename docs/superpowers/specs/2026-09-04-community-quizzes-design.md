@@ -631,6 +631,7 @@ comment at the spot in code.
 | Score and plays computed by subselect | Slower listing at tens of thousands of quizzes | counter columns updated by triggers |
 | No rate limiting | Abuse can hammer publish or grade | `limit_req` in nginx or Caddy |
 | Finished race players hold the answer key | Friends can share answers | withhold results until the room finishes |
+| Anonymous grading returns the full answer key | Anyone can read a published quiz's answers with one request and then submit a perfect attempt, so the leaderboard runs on trust | return per-question correctness and explanations without `answer` on the anonymous route, or require an attempt id for the full key |
 | No host transfer in rooms | Host leaving strands a sync room at reveal | auto-advance timer on reveal |
 
 ## 20. Out of scope for the first implementation plan
