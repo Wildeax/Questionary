@@ -1,8 +1,8 @@
-import type { Question, QuizMetadata } from "../../shared/types.ts";
+import type { PlayQuestion, QuizMetadata } from "../../shared/types.ts";
 import { isMC } from "../../shared/questions.ts";
 
 type QuestionPageProps = {
-  question: Question;
+  question: PlayQuestion;
   index: number;
   total: number;
   value: number | boolean | undefined;
@@ -13,6 +13,7 @@ type QuestionPageProps = {
   onFinish: () => void;
   onQuit: () => void;
   quizMetadata: QuizMetadata;
+  submitting?: boolean;
 };
 
 export function QuestionPage({
@@ -27,6 +28,7 @@ export function QuestionPage({
   onFinish,
   onQuit,
   quizMetadata,
+  submitting,
 }: QuestionPageProps) {
   return (
     <div className="min-h-[70vh] flex flex-col">
@@ -129,9 +131,10 @@ export function QuestionPage({
               ) : (
                 <button
                   onClick={onFinish}
-                  className="rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700"
+                  disabled={submitting}
+                  className="rounded-xl px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-60"
                 >
-                  Finish
+                  {submitting ? "Submitting…" : "Finish"}
                 </button>
               )}
             </div>

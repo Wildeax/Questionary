@@ -6,7 +6,9 @@ export function getTemplate(kind: "json" | "yaml") {
   {
     "metadata": {
       "name": "My Quiz Title",
-      "author": "Your Name (optional)"
+      "author": "Your Name (optional)",
+      "description": "What this quiz covers (optional)",
+      "tags": ["topic", "level"]
     }
   },
   {
@@ -26,8 +28,10 @@ export function getTemplate(kind: "json" | "yaml") {
 ]`;
   }
   return `- metadata:
-  name: "My Quiz Title"
-  author: "Your Name (optional)"
+    name: "My Quiz Title"
+    author: "Your Name (optional)"
+    description: "What this quiz covers (optional)"
+    tags: ["topic", "level"]
 - id: q1
   type: mc
   prompt: "<your question here>"

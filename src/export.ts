@@ -1,5 +1,6 @@
-import type { Question } from "../shared/types.ts";
-import { isMC, formatCorrectAnswer, formatUserAnswer } from "../shared/questions.ts";
+import type { Answers, Question } from "../shared/types.ts";
+import { formatCorrectAnswer, formatUserAnswer } from "../shared/questions.ts";
+import { grade } from "../shared/grade.ts";
 
 export interface QuizResult {
   questionNumber: number;
@@ -13,15 +14,10 @@ export interface QuizResult {
 }
 
 // Generate quiz results data
-export function generateQuizResults(
-  questions: Question[],
-  answers: Record<string, number | boolean | undefined>
-): QuizResult[] {
+export function generateQuizResults(questions: Question[], answers: Answers): QuizResult[] {
+  const per = grade(questions, answers).perQuestion;
   return questions.map((q, idx) => {
     const user = answers[q.id];
-    const isCorrect = isMC(q)
-      ? typeof user === "number" && user === q.answer
-      : typeof user === "boolean" && user === q.answer;
 
     return {
       questionNumber: idx + 1,
@@ -30,7 +26,7 @@ export function generateQuizResults(
       questionType: q.type,
       userAnswer: formatUserAnswer(q, user),
       correctAnswer: formatCorrectAnswer(q),
-      isCorrect,
+      isCorrect: per[q.id],
       explanation: q.explanation,
     };
   });
@@ -41,7 +37,7 @@ export function exportAsJSON(results: QuizResult[]): void {
   const dataStr = JSON.stringify(results, null, 2);
   const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
 
-  const exportFileDefaultName = `unity_certification_results_${new Date().toISOString().split('T')[0]}.json`;
+  const exportFileDefaultName = `questionary_results_${new Date().toISOString().split('T')[0]}.json`;
 
   const linkElement = document.createElement('a');
   linkElement.setAttribute('href', dataUri);
@@ -77,7 +73,7 @@ export function exportAsCSV(results: QuizResult[]): void {
   ].join('\n');
 
   const dataUri = 'data:text/csv;charset=utf-8,'+ encodeURIComponent(csvContent);
-  const exportFileDefaultName = `unity_certification_results_${new Date().toISOString().split('T')[0]}.csv`;
+  const exportFileDefaultName = `questionary_results_${new Date().toISOString().split('T')[0]}.csv`;
 
   const linkElement = document.createElement('a');
   linkElement.setAttribute('href', dataUri);

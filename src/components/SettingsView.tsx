@@ -1,14 +1,10 @@
 import { useState } from "react";
-import type { QuizData } from "../../shared/types.ts";
+import type { QuizMetadata, QuizSettings } from "../../shared/types.ts";
 
 type SettingsProps = {
   questionCount: number;
-  quizMetadata: QuizData | null;
+  quizMetadata: { metadata: QuizMetadata } | null;
   onStartQuiz: (_settings: QuizSettings) => void;
-};
-
-export type QuizSettings = {
-  randomOrder: boolean;
 };
 
 export function SettingsView({ questionCount, quizMetadata, onStartQuiz }: SettingsProps) {

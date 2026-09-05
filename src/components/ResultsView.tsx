@@ -1,30 +1,21 @@
-import type { Question } from "../../shared/types.ts";
+import type { Answers, Question } from "../../shared/types.ts";
 import { isMC, formatCorrectAnswer, formatUserAnswer } from "../../shared/questions.ts";
-import { generateQuizResults, exportAsJSON, exportAsCSV } from "../export";
+import { grade } from "../../shared/grade.ts";
+import { generateQuizResults, exportAsJSON, exportAsCSV } from "../export.ts";
 
 type ResultsProps = {
   questions: Question[];
-  answers: Record<string, number | boolean | undefined>;
+  answers: Answers;
   onRestart: () => void;
+  onExit: () => void;
+  exitLabel: string;
 };
 
-export function ResultsView({ questions, answers, onRestart }: ResultsProps) {
-  const rows = questions.map((q, idx) => {
-    const user = answers[q.id];
-    const isCorrect = isMC(q)
-      ? typeof user === "number" && user === q.answer
-      : typeof user === "boolean" && user === q.answer;
-
-    return {
-      idx,
-      q,
-      user,
-      isCorrect,
-    };
-  });
-
-  const correctCount = rows.filter((r) => r.isCorrect).length;
-  const total = questions.length;
+export function ResultsView({ questions, answers, onRestart, onExit, exitLabel }: ResultsProps) {
+  const result = grade(questions, answers);
+  const rows = questions.map((q, idx) => ({ idx, q, user: answers[q.id], isCorrect: result.perQuestion[q.id] }));
+  const correctCount = result.correct;
+  const total = result.total;
   const pct = total ? Math.round((correctCount / total) * 100) : 0;
 
   // Generate export data
@@ -60,17 +51,11 @@ export function ResultsView({ questions, answers, onRestart }: ResultsProps) {
           >
             Export JSON
           </button>
-          <button
-            onClick={() => window.location.reload()}
-            className="rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700"
-          >
-            Start Over
+          <button onClick={onRestart} className="rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700">
+            Play again
           </button>
-          <button
-            onClick={onRestart}
-            className="rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700"
-          >
-            Back to Import
+          <button onClick={onExit} className="rounded-xl px-4 py-2 bg-neutral-800 hover:bg-neutral-700">
+            {exitLabel}
           </button>
         </div>
       </div>
