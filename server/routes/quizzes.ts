@@ -7,6 +7,7 @@ import { CARD_SELECT, getQuizRow, replaceTags, toCard, type Row } from "../cards
 import { bestFor, leaderboardFor, scoreOf, voteOf } from "../social.ts";
 import { validateQuizInput, type QuizInput } from "../../shared/validate.ts";
 import { quizDocument, slugify } from "../../shared/document.ts";
+import { languageName } from "../../shared/languages.ts";
 import type { Question } from "../../shared/types.ts";
 
 export const PAGE_SIZE = 20;
@@ -41,6 +42,7 @@ export function quizRoutes(db: Db): express.Router {
   r.get("/quizzes", (req, res) => {
     const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
     const tag = typeof req.query.tag === "string" ? req.query.tag.trim().toLowerCase() : "";
+    const lang = typeof req.query.lang === "string" ? req.query.lang.trim().toLowerCase() : "";
     const sortKey = String(req.query.sort ?? "top");
     const sort = Object.hasOwn(SORTS, sortKey) ? SORTS[sortKey] : SORTS.top;
     const page = Math.min(Math.max(1, Math.floor(Number(req.query.page)) || 1), 10_000);
@@ -51,23 +53,36 @@ export function quizRoutes(db: Db): express.Router {
          WHERE q.published = 1
            AND (? = '' OR q.title LIKE ? OR q.description LIKE ?)
            AND (? = '' OR EXISTS (SELECT 1 FROM quiz_tags t WHERE t.quiz_id = q.id AND t.tag = ?))
+           AND (? = '' OR q.language = ?)
          ORDER BY ${sort}
          LIMIT ? OFFSET ?`
       )
-      .all(q, `%${q}%`, `%${q}%`, tag, tag, PAGE_SIZE + 1, (page - 1) * PAGE_SIZE) as Row[];
+      .all(q, `%${q}%`, `%${q}%`, tag, tag, lang, lang, PAGE_SIZE + 1, (page - 1) * PAGE_SIZE) as Row[];
     res.json({ items: rows.slice(0, PAGE_SIZE).map(toCard), page, hasMore: rows.length > PAGE_SIZE });
   });
 
   r.post("/quizzes", requireUser, (req, res) => {
     const me = requireMe(res);
     const input = parseInput(req.body);
+    const rawSource = (req.body as { translationOf?: unknown }).translationOf;
+    // A translation links to the root of its group, so a translation of a translation still finds every sibling.
+    let root: number | null = null;
+    if (rawSource !== undefined && rawSource !== null) {
+      const source = getQuizRow(db, idParam(rawSource));
+      if (!source.published && source.author_id !== me.id) throw new HttpError(404, "Not found");
+      root = source.translation_of ?? source.id;
+      const taken = db
+        .prepare("SELECT id FROM quizzes WHERE (id = ? OR translation_of = ?) AND language = ? AND (published = 1 OR id = ?)")
+        .get(root, root, input.language, root);
+      if (taken) throw new HttpError(400, `This quiz already exists in ${languageName(input.language)}. Pick another language.`);
+    }
     const now = Date.now();
     const id = tx(db, () => {
       const row = db
         .prepare(
-          "INSERT INTO quizzes (author_id, title, description, questions, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
+          "INSERT INTO quizzes (author_id, title, description, questions, language, translation_of, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
         )
-        .get(me.id, input.title, input.description, JSON.stringify(input.questions), now, now) as { id: number };
+        .get(me.id, input.title, input.description, JSON.stringify(input.questions), input.language, root, now, now) as { id: number };
       replaceTags(db, row.id, input.tags);
       return row.id;
     });
@@ -79,18 +94,21 @@ export function quizRoutes(db: Db): express.Router {
     const me = getUser(res);
     const isAuthor = me?.id === row.author_id;
     if (!row.published && !isAuthor) throw new HttpError(404, "Not found");
+    const root = row.translation_of ?? row.id;
     const detail = {
       ...toCard(row),
       version: row.version,
       myVote: me ? voteOf(db, row.id, me.id) : 0,
       leaderboard: leaderboardFor(db, row.id, row.version),
       myBest: me ? bestFor(db, row.id, row.version, me.id) : null,
+      translationOf: row.translation_of,
+      translations: db
+        .prepare("SELECT id, title, language FROM quizzes WHERE (id = ? OR translation_of = ?) AND id != ? AND published = 1 ORDER BY language")
+        .all(root, root, row.id),
     };
-    if (isAuthor) {
-      res.json({ ...detail, questions: JSON.parse(row.questions) as Question[], published: row.published === 1 });
-      return;
-    }
-    res.json(detail);
+    // Signed-in users get the answer key so they can translate the quiz. Anonymous grading already hands it out (spec section 19).
+    const full = me ? { ...detail, questions: JSON.parse(row.questions) as Question[] } : detail;
+    res.json(isAuthor ? { ...full, published: row.published === 1 } : full);
   });
 
   r.put("/quizzes/:id", requireUser, (req, res) => {
@@ -103,8 +121,8 @@ export function quizRoutes(db: Db): express.Router {
     const bump = row.published_at !== null && questionsJson !== row.questions ? 1 : 0;
     tx(db, () => {
       db.prepare(
-        "UPDATE quizzes SET title = ?, description = ?, questions = ?, version = version + ?, updated_at = ? WHERE id = ?"
-      ).run(input.title, input.description, questionsJson, bump, Date.now(), row.id);
+        "UPDATE quizzes SET title = ?, description = ?, questions = ?, language = ?, version = version + ?, updated_at = ? WHERE id = ?"
+      ).run(input.title, input.description, questionsJson, input.language, bump, Date.now(), row.id);
       replaceTags(db, row.id, input.tags);
     });
     res.json({ id: row.id, version: row.version + bump });
@@ -144,7 +162,7 @@ export function quizRoutes(db: Db): express.Router {
     authorize(row, me, false);
     const tags = row.tags ? row.tags.split(",") : [];
     const doc = quizDocument(
-      { name: row.title, author: row.username, description: row.description || undefined, tags: tags.length ? tags : undefined },
+      { name: row.title, author: row.username, description: row.description || undefined, tags: tags.length ? tags : undefined, language: row.language },
       JSON.parse(row.questions) as Question[]
     );
     res.setHeader("Content-Type", "application/yaml; charset=utf-8");

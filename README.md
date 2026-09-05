@@ -2,9 +2,10 @@
 
 Community quizzes. Sign in with GitHub, publish a quiz from a YAML or JSON file, and play
 quizzes other people published. Grading happens on the server, so the answer key never
-reaches the browser before you submit. Vote quizzes up or down, filter by tag, compete
-on each quiz's leaderboard, or host a room and race your friends live. The original
-offline mode still lives at `/local`.
+reaches the browser before you submit. Vote quizzes up or down, filter by tag or
+language, publish a translation of someone else's quiz, compete on each quiz's
+leaderboard, or host a room and race your friends live. The original offline mode
+still lives at `/local`.
 
 ## Run it locally
 
@@ -30,6 +31,7 @@ A document is a list. The first item is metadata, the rest are questions.
     author: "you"                 # optional, shown in offline mode only
     description: "Warm-up set"    # optional, prefills the publish form
     tags: [unity, csharp]         # optional, up to 5
+    language: en                  # optional, ISO 639-1 code, defaults to en
 - id: Q001
   type: mc
   prompt: "Which call allocates on the managed heap?"

@@ -20,6 +20,12 @@ const yamlDoc = `
 `;
 
 describe("parseQuestionsFromText", () => {
+  it("reads an optional language from metadata", () => {
+    assert.equal(parseQuestionsFromText(yamlDoc).metadata.language, undefined);
+    assert.equal(parseQuestionsFromText(yamlDoc.replace('name: "Sample"', 'name: "Sample"\n    language: PT')).metadata.language, "pt");
+    assert.throws(() => parseQuestionsFromText(yamlDoc.replace('name: "Sample"', 'name: "Sample"\n    language: xx')), /Unknown language/);
+  });
+
   it("parses metadata with the new optional fields", () => {
     const data = parseQuestionsFromText(yamlDoc);
     assert.equal(data.metadata.name, "Sample");
@@ -92,5 +98,10 @@ describe("validateQuizInput", () => {
   });
   it("rejects zero questions", () => {
     assert.throws(() => validateQuizInput({ title: "t", questions: [] }), /No valid questions/);
+  });
+  it("defaults the language to English and rejects unknown codes", () => {
+    assert.equal(validateQuizInput({ title: "t", questions }).language, "en");
+    assert.equal(validateQuizInput({ title: "t", questions, language: " ES " }).language, "es");
+    assert.throws(() => validateQuizInput({ title: "t", questions, language: "xx" }), /Unknown language/);
   });
 });

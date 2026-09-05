@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { ArrowFatDown, ArrowFatUp, DownloadSimple, EyeSlash, ListChecks, Medal, PaperPlaneTilt, PencilSimple, Play, Star, Trash, Trophy, UsersThree } from "@phosphor-icons/react";
+import { ArrowFatDown, ArrowFatUp, DownloadSimple, EyeSlash, ListChecks, Medal, PaperPlaneTilt, PencilSimple, Play, Star, Translate, Trash, Trophy, UsersThree } from "@phosphor-icons/react";
 import { deleteQuiz, getQuiz, publishQuiz, unpublishQuiz, vote, type QuizDetail } from "../api.ts";
+import { languageName } from "../../shared/languages.ts";
 import { useMe } from "../me.tsx";
 import { ErrorBox } from "../components/ErrorBox.tsx";
 import { Loading } from "../components/Loading.tsx";
@@ -116,12 +117,25 @@ export function Quiz() {
           <span className="inline-flex items-center gap-1">
             <Play aria-hidden /> {quiz.plays} plays
           </span>
+          <Link to={`/?lang=${quiz.language}`} className="inline-flex items-center gap-1 hover:text-neutral-200" title="Language">
+            <Translate aria-hidden /> {languageName(quiz.language)}
+          </Link>
           {quiz.tags.map((t) => (
             <Link key={t} to={`/?tag=${encodeURIComponent(t)}`} className="rounded-md bg-neutral-800 px-1.5 py-0.5 hover:bg-neutral-700">
               {t}
             </Link>
           ))}
         </div>
+        {quiz.translations.length > 0 && (
+          <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-neutral-400">
+            Also in:
+            {quiz.translations.map((t) => (
+              <Link key={t.id} to={`/quiz/${t.id}`} title={t.title} className="rounded-md bg-neutral-800 px-2 py-0.5 text-neutral-200 hover:bg-neutral-700">
+                {languageName(t.language)}
+              </Link>
+            ))}
+          </p>
+        )}
         <div className="mt-6 flex flex-wrap gap-3">
           {isPublished && (
             <Link to={`/quiz/${quiz.id}/play`} className={`${btn} bg-emerald-600 hover:bg-emerald-500 font-medium`}>
@@ -131,6 +145,11 @@ export function Quiz() {
           {isPublished && me && (
             <Link to={`/rooms/new?quiz=${quiz.id}`} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
               <UsersThree aria-hidden /> Host a room
+            </Link>
+          )}
+          {isPublished && me && (
+            <Link to={`/new?translate=${quiz.id}`} className={`${btn} bg-neutral-800 hover:bg-neutral-700`}>
+              <Translate aria-hidden /> Add translation
             </Link>
           )}
           {isAuthor && (

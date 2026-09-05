@@ -1,5 +1,6 @@
 import { load } from "js-yaml";
 import type { MCQuestion, Question, QuizData, QuizMetadata, TFQuestion } from "./types.ts";
+import { DEFAULT_LANGUAGE, isLanguage, LANGUAGES } from "./languages.ts";
 
 export const TAG_RE = /^[a-z0-9][a-z0-9-]{0,29}$/;
 export const MAX_TAGS = 5;
@@ -18,6 +19,17 @@ export function normalizeTags(raw: unknown): string[] {
   if (out.length > MAX_TAGS) throw new Error(`A quiz can have at most ${MAX_TAGS} tags.`);
   return out;
 }
+
+/** "PT " -> "pt". Throws on codes outside the supported list. */
+export function parseLanguage(raw: unknown): string {
+  const code = String(raw).trim().toLowerCase();
+  if (!isLanguage(code)) {
+    throw new Error(`Unknown language "${String(raw)}". Use one of: ${Object.keys(LANGUAGES).join(", ")}.`);
+  }
+  return code;
+}
+
+const blank = (v: unknown) => v === undefined || v === null || v === "";
 
 export function parseQuestionsFromText(text: string): QuizData {
   if (!text || text.trim().length === 0) {
@@ -104,6 +116,7 @@ export function validateQuizData(raw: unknown[]): QuizData {
     author: md.author ? String(md.author) : undefined,
     description: md.description ? String(md.description) : undefined,
     tags: Array.isArray(md.tags) ? normalizeTags(md.tags) : undefined,
+    language: blank(md.language) ? undefined : parseLanguage(md.language),
   };
 
   const questions: Question[] = [];
@@ -198,6 +211,7 @@ export type QuizInput = {
   title: string;
   description: string;
   tags: string[];
+  language: string;
   questions: Question[];
 };
 
@@ -210,7 +224,8 @@ export function validateQuizInput(body: unknown): QuizInput {
   const description = typeof b.description === "string" ? b.description.trim() : "";
   if (description.length > 1000) throw new Error("Description must be at most 1000 characters.");
   const tags = normalizeTags(b.tags ?? []);
+  const language = blank(b.language) ? DEFAULT_LANGUAGE : parseLanguage(b.language);
   if (!Array.isArray(b.questions)) throw new Error("questions must be an array.");
   const { questions } = validateQuizData([{ metadata: { name: title } }, ...b.questions]);
-  return { title, description, tags, questions };
+  return { title, description, tags, language, questions };
 }

@@ -220,6 +220,29 @@ async function main() {
       await shot(page, "07-history");
       await page.context().close();
     });
+
+    await step("8 translation: prefilled editor, language select, cross-links, catalog language filter", async () => {
+      const page = await newPage(ids.bob);
+      await page.goto(BASE + `/quiz/${other}`);
+      await page.click('a:has-text("Add translation")');
+      await page.waitForSelector('h1:has-text("Translate quiz")');
+      await page.waitForSelector('[data-question="S1"]');
+      await page.selectOption('select[aria-label="Language"]', "es");
+      await page.fill('input[maxlength="120"]', "Fundamentos de Unity");
+      await page.fill('[data-question="S1"] textarea[aria-label="Prompt"]', "Elige B");
+      await page.click('button:has-text("Publish")');
+      await page.waitForURL(/\/quiz\/\d+$/);
+      const esId = Number(page.url().split("/").pop());
+      await page.waitForSelector('a:has-text("English")');
+      await shot(page, "08-translation");
+      await page.goto(BASE + `/quiz/${other}`);
+      await page.waitForSelector('a:has-text("Español")');
+      await page.goto(BASE + "/?lang=es");
+      await page.waitForSelector(`a[href="/quiz/${esId}"]`);
+      if (await page.$(`a[href="/quiz/${other}"]`)) throw new Error("English quiz shown under the Spanish filter");
+      await page.context().close();
+      return `quiz ${esId}`;
+    });
   } finally {
     await browser.close();
     server.kill();

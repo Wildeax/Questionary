@@ -1,6 +1,7 @@
 import { Link } from "react-router";
-import { ArrowFatUp, ListChecks, Play } from "@phosphor-icons/react";
+import { ArrowFatUp, ListChecks, Play, Translate } from "@phosphor-icons/react";
 import type { QuizCard } from "../../shared/types.ts";
+import { languageName } from "../../shared/languages.ts";
 
 export function QuizCardView({ quiz }: { quiz: QuizCard }) {
   return (
@@ -25,6 +26,9 @@ export function QuizCardView({ quiz }: { quiz: QuizCard }) {
         </span>
         <span className="flex items-center gap-1">
           <Play size={14} aria-hidden /> {quiz.plays} plays
+        </span>
+        <span className="flex items-center gap-1" title="Language">
+          <Translate size={14} aria-hidden /> {languageName(quiz.language)}
         </span>
         {quiz.tags.map((t) => (
           <span key={t} className="rounded-md bg-neutral-800 px-1.5 py-0.5">

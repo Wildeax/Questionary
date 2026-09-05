@@ -6,6 +6,7 @@ export function quizDocument(metadata: QuizMetadata, questions: Question[]): unk
   if (metadata.author) head.author = metadata.author;
   if (metadata.description) head.description = metadata.description;
   if (metadata.tags && metadata.tags.length) head.tags = metadata.tags;
+  if (metadata.language) head.language = metadata.language;
   return [{ metadata: head }, ...questions];
 }
 

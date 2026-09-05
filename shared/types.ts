@@ -3,6 +3,7 @@ export type QuizMetadata = {
   author?: string;
   description?: string;
   tags?: string[];
+  language?: string;
 };
 
 export type BaseQuestion = {
@@ -67,6 +68,7 @@ export type QuizCard = {
   description: string;
   author: { username: string; avatarUrl: string };
   tags: string[];
+  language: string;
   questionCount: number;
   score: number;
   plays: number;

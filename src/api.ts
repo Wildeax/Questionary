@@ -26,11 +26,15 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export type QuizPage = { items: QuizCard[]; page: number; hasMore: boolean };
+export type Translation = { id: number; title: string; language: string };
 export type QuizDetail = QuizCard & {
   version: number;
   myVote: number;
   leaderboard: LeaderboardEntry[];
   myBest: BestAttempt | null;
+  translationOf: number | null;
+  translations: Translation[];
+  /** Present when signed in; the author also gets `published`. */
   questions?: Question[];
   published?: boolean;
 };
@@ -48,10 +52,11 @@ export type MyQuizzes = { drafts: QuizCard[]; published: QuizCard[] };
 export const getMe = () => request<Me>("GET", "/api/me");
 export const logout = () => request<{ ok: true }>("POST", "/api/auth/logout");
 
-export function listQuizzes(params: { q?: string; tag?: string; sort?: string; page?: number }) {
+export function listQuizzes(params: { q?: string; tag?: string; lang?: string; sort?: string; page?: number }) {
   const search = new URLSearchParams();
   if (params.q) search.set("q", params.q);
   if (params.tag) search.set("tag", params.tag);
+  if (params.lang) search.set("lang", params.lang);
   if (params.sort) search.set("sort", params.sort);
   if (params.page && params.page > 1) search.set("page", String(params.page));
   const qs = search.toString();
@@ -59,7 +64,7 @@ export function listQuizzes(params: { q?: string; tag?: string; sort?: string; p
 }
 
 export const getQuiz = (id: number | string) => request<QuizDetail>("GET", `/api/quizzes/${id}`);
-export const createQuiz = (input: QuizInput) => request<{ id: number }>("POST", "/api/quizzes", input);
+export const createQuiz = (input: QuizInput & { translationOf?: number }) => request<{ id: number }>("POST", "/api/quizzes", input);
 export const updateQuiz = (id: number | string, input: QuizInput) =>
   request<{ id: number; version: number }>("PUT", `/api/quizzes/${id}`, input);
 export const deleteQuiz = (id: number | string) => request<{ ok: true }>("DELETE", `/api/quizzes/${id}`);

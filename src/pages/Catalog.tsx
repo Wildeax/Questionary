@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { CaretLeft, CaretRight, ChartLineUp, Compass, DoorOpen, Fire, Sparkle, Tag, X, type Icon } from "@phosphor-icons/react";
+import { CaretLeft, CaretRight, ChartLineUp, Compass, DoorOpen, Fire, Sparkle, Tag, Translate, X, type Icon } from "@phosphor-icons/react";
 import { getTags, listQuizzes, type QuizPage } from "../api.ts";
 import type { TagCount } from "../../shared/types.ts";
+import { LANGUAGES } from "../../shared/languages.ts";
 import { QuizCardView } from "../components/QuizCardView.tsx";
 import { ErrorBox } from "../components/ErrorBox.tsx";
 
@@ -19,6 +20,7 @@ export function Catalog() {
   const q = params.get("q") ?? "";
   const sort = params.get("sort") ?? "top";
   const tag = params.get("tag") ?? "";
+  const lang = params.get("lang") ?? "";
   const page = Math.max(1, Number(params.get("page")) || 1);
   const [data, setData] = useState<QuizPage | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,13 +29,13 @@ export function Catalog() {
   useEffect(() => {
     let alive = true;
     setError(null);
-    listQuizzes({ q, sort, tag, page })
+    listQuizzes({ q, sort, tag, lang, page })
       .then((d) => alive && setData(d))
       .catch((e: Error) => alive && setError(e.message));
     return () => {
       alive = false;
     };
-  }, [q, sort, tag, page]);
+  }, [q, sort, tag, lang, page]);
 
   useEffect(() => {
     let alive = true;
@@ -74,6 +76,19 @@ export function Catalog() {
             <SortIcon weight={sort === s ? "fill" : "duotone"} aria-hidden /> {label}
           </button>
         ))}
+        <label className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm ${lang ? "bg-emerald-600" : "bg-neutral-800 hover:bg-neutral-700"}`}>
+          <Translate weight={lang ? "fill" : "duotone"} aria-hidden />
+          <select value={lang} onChange={(e) => setParam("lang", e.target.value)} aria-label="Language" className="bg-transparent text-neutral-100 focus:outline-none">
+            <option value="" className="bg-neutral-900">
+              All languages
+            </option>
+            {Object.entries(LANGUAGES).map(([code, name]) => (
+              <option key={code} value={code} className="bg-neutral-900">
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
         {q && filterChip(`Results for "${q}"`, () => setParam("q", ""))}
         {tag && filterChip(`Tag: ${tag}`, () => setParam("tag", ""))}
         <form

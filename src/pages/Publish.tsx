@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { dump } from "js-yaml";
-import { DownloadSimple, FileArrowUp, FileCode, FloppyDisk, ListChecks, PaperPlaneTilt, PencilLine, UploadSimple } from "@phosphor-icons/react";
+import { DownloadSimple, FileArrowUp, FileCode, FloppyDisk, ListChecks, PaperPlaneTilt, PencilLine, Translate, UploadSimple } from "@phosphor-icons/react";
 import type { Question, QuizMetadata } from "../../shared/types.ts";
 import { parseQuestionsFromText, validateQuizInput, type QuizInput } from "../../shared/validate.ts";
 import { quizDocument, slugify } from "../../shared/document.ts";
 import { blankQuestion } from "../../shared/editor.ts";
+import { DEFAULT_LANGUAGE, LANGUAGES, languageName } from "../../shared/languages.ts";
 import { createQuiz, getQuiz, publishQuiz, updateQuiz } from "../api.ts";
 import { getTemplate } from "../templates.ts";
 import { useMe } from "../me.tsx";
@@ -17,14 +18,23 @@ const field = "w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 te
 const btn = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 transition disabled:opacity-50";
 const UNTITLED = "Untitled quiz";
 
+const MODES = [
+  ["upload", "Upload", UploadSimple],
+  ["editor", "Editor", PencilLine],
+] as const;
+
 export function Publish() {
   const { id } = useParams();
+  const [params] = useSearchParams();
   const editing = id !== undefined;
+  const translateId = editing ? null : params.get("translate");
   const navigate = useNavigate();
   const { me, loading } = useMe();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
+  const [source, setSource] = useState<{ id: number; title: string; language: string } | null>(null);
   const [text, setText] = useState("");
   const [count, setCount] = useState<number | null>(null);
   const [mode, setMode] = useState<"upload" | "editor">("upload");
@@ -43,16 +53,18 @@ export function Publish() {
     getQuiz(id!)
       .then((q) => {
         if (!alive) return;
-        if (!q.questions) {
+        // Only the author receives the `published` flag.
+        if (q.published === undefined || !q.questions) {
           setError("Only the author can edit this quiz.");
           return;
         }
         setTitle(q.title);
         setDescription(q.description);
         setTags(q.tags);
-        setPublished(q.published === true);
+        setLanguage(q.language);
+        setPublished(q.published);
         setText(
-          dump(quizDocument({ name: q.title, description: q.description || undefined, tags: q.tags.length ? q.tags : undefined }, q.questions), {
+          dump(quizDocument({ name: q.title, description: q.description || undefined, tags: q.tags.length ? q.tags : undefined, language: q.language }, q.questions), {
             lineWidth: -1,
           })
         );
@@ -65,15 +77,45 @@ export function Publish() {
     };
   }, [editing, id]);
 
+  // Translating: start from the source quiz in the editor, in the first language the source is not in.
+  useEffect(() => {
+    if (translateId === null) return;
+    let alive = true;
+    getQuiz(translateId)
+      .then((q) => {
+        if (!alive) return;
+        if (!q.questions) {
+          setError("Sign in to translate this quiz.");
+          return;
+        }
+        setSource({ id: q.id, title: q.title, language: q.language });
+        setTitle(q.title);
+        setDescription(q.description);
+        setTags(q.tags);
+        setQuestions(q.questions);
+        setLanguage(Object.keys(LANGUAGES).find((code) => code !== q.language) ?? DEFAULT_LANGUAGE);
+        setMode("editor");
+      })
+      .catch((e: Error) => alive && setError(e.message));
+    return () => {
+      alive = false;
+    };
+  }, [translateId]);
+
+  function adoptMetadata(metadata: QuizMetadata) {
+    if (!title) setTitle(metadata.name);
+    if (!description && metadata.description) setDescription(metadata.description);
+    if (tags.length === 0 && metadata.tags?.length) setTags(metadata.tags);
+    if (metadata.language) setLanguage(metadata.language);
+  }
+
   function onTextChange(value: string) {
     setText(value);
     setError(null);
     try {
       const parsed = parseQuestionsFromText(value);
       setCount(parsed.questions.length);
-      if (!title) setTitle(parsed.metadata.name);
-      if (!description && parsed.metadata.description) setDescription(parsed.metadata.description);
-      if (tags.length === 0 && parsed.metadata.tags?.length) setTags(parsed.metadata.tags);
+      adoptMetadata(parsed.metadata);
     } catch {
       setCount(null);
     }
@@ -88,7 +130,7 @@ export function Publish() {
 
   /** Metadata from the form fields, for the upload-tab dump and the download. */
   function metadataFor(): QuizMetadata {
-    return { name: title.trim() || UNTITLED, description: description.trim() || undefined, tags: tags.length ? tags : undefined };
+    return { name: title.trim() || UNTITLED, description: description.trim() || undefined, tags: tags.length ? tags : undefined, language };
   }
 
   function switchMode(next: "upload" | "editor") {
@@ -99,9 +141,7 @@ export function Publish() {
         try {
           const parsed = parseQuestionsFromText(text);
           setQuestions(parsed.questions);
-          if (!title) setTitle(parsed.metadata.name);
-          if (!description && parsed.metadata.description) setDescription(parsed.metadata.description);
-          if (tags.length === 0 && parsed.metadata.tags?.length) setTags(parsed.metadata.tags);
+          adoptMetadata(parsed.metadata);
         } catch (e) {
           setError(`${(e as Error).message}\n\nFix or clear the text above to open the editor.`);
           return;
@@ -129,7 +169,7 @@ export function Publish() {
   function buildInput(): QuizInput | null {
     try {
       if (mode === "editor") {
-        return validateQuizInput({ title, description, tags, questions });
+        return validateQuizInput({ title, description, tags, language, questions });
       }
       const parsed = parseQuestionsFromText(text);
       if (!title.trim() && parsed.metadata.name === UNTITLED) throw new Error("Title must be 1 to 120 characters.");
@@ -137,6 +177,7 @@ export function Publish() {
         title: title.trim() || parsed.metadata.name,
         description: description.trim() || parsed.metadata.description || "",
         tags: tags.length ? tags : parsed.metadata.tags ?? [],
+        language,
         questions: parsed.questions,
       });
     } catch (e) {
@@ -156,7 +197,7 @@ export function Publish() {
         await updateQuiz(id!, input);
         quizId = Number(id);
       } else {
-        quizId = (await createQuiz(input)).id;
+        quizId = (await createQuiz({ ...input, translationOf: source?.id })).id;
       }
       if (publish && !published) await publishQuiz(quizId);
       navigate(publish || published ? `/quiz/${quizId}` : "/me");
@@ -167,14 +208,18 @@ export function Publish() {
     }
   }
 
-  const MODES = [
-    ["upload", "Upload", UploadSimple],
-    ["editor", "Editor", PencilLine],
-  ] as const;
-
   return (
     <div className="max-w-3xl mx-auto bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
-      <h1 className="text-2xl font-semibold mb-4">{editing ? "Edit quiz" : "New quiz"}</h1>
+      <h1 className="text-2xl font-semibold mb-4">{translateId !== null ? "Translate quiz" : editing ? "Edit quiz" : "New quiz"}</h1>
+      {source && (
+        <p className="mb-4 flex items-start gap-2 text-sm text-neutral-400">
+          <Translate className="mt-0.5 shrink-0 text-emerald-400" aria-hidden />
+          <span>
+            Translating "{source.title}" from {languageName(source.language)}. Pick the target language, then rewrite the title, prompts, options and
+            explanations. Keep the options in the same order so the answers stay right.
+          </span>
+        </p>
+      )}
 
       <label className="block text-sm text-neutral-300 mb-1">Title</label>
       <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className={field} />
@@ -184,6 +229,15 @@ export function Publish() {
 
       <label className="block text-sm text-neutral-300 mt-4 mb-1">Tags</label>
       <TagInput value={tags} onChange={setTags} />
+
+      <label className="block text-sm text-neutral-300 mt-4 mb-1">Language</label>
+      <select value={language} onChange={(e) => setLanguage(e.target.value)} aria-label="Language" className={field}>
+        {Object.entries(LANGUAGES).map(([code, name]) => (
+          <option key={code} value={code}>
+            {name}
+          </option>
+        ))}
+      </select>
 
       <div className="mt-4 flex items-center gap-2">
         <span className="text-sm text-neutral-300">Questions</span>

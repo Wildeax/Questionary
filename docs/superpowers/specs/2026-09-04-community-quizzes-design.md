@@ -178,10 +178,13 @@ CREATE TABLE IF NOT EXISTS quizzes (
   published     INTEGER NOT NULL DEFAULT 0,  -- 0 draft, 1 published
   created_at    INTEGER NOT NULL,
   updated_at    INTEGER NOT NULL,
-  published_at  INTEGER
+  published_at  INTEGER,
+  language        TEXT    NOT NULL DEFAULT 'en',  -- ISO 639-1, see shared/languages.ts
+  translation_of  INTEGER REFERENCES quizzes(id) ON DELETE SET NULL  -- root of the translation group
 );
-CREATE INDEX IF NOT EXISTS quizzes_published ON quizzes(published, published_at);
-CREATE INDEX IF NOT EXISTS quizzes_author    ON quizzes(author_id);
+CREATE INDEX IF NOT EXISTS quizzes_published   ON quizzes(published, published_at);
+CREATE INDEX IF NOT EXISTS quizzes_author      ON quizzes(author_id);
+CREATE INDEX IF NOT EXISTS quizzes_translation ON quizzes(translation_of);
 
 CREATE TABLE IF NOT EXISTS quiz_tags (
   quiz_id  INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
@@ -226,7 +229,7 @@ Rooms are not in the database. See section 14.
 
 ## 8. Quiz file format
 
-Unchanged shape, two new optional metadata fields.
+Unchanged shape, three new optional metadata fields.
 
 ```yaml
 - metadata:
@@ -234,6 +237,7 @@ Unchanged shape, two new optional metadata fields.
     author: "Wildeax"                     # optional, display only
     description: "100 questions on ..."   # optional, prefills the publish form
     tags: [unity, csharp, certification]  # optional, prefills the publish form
+    language: en                          # optional, ISO 639-1 code, defaults to en
 - id: Q001
   type: mc
   prompt: "..."
@@ -246,7 +250,7 @@ Unchanged shape, two new optional metadata fields.
   answer: true
 ```
 
-`validateQuizData` in `shared/validate.ts` accepts and normalizes the two new fields.
+`validateQuizData` in `shared/validate.ts` accepts and normalizes the three new fields.
 Export (`GET /api/quizzes/:id/export`) writes them back. On publish the file's `author`
 field is ignored: the signed-in publisher is the author everywhere on the site. Local
 mode still shows the file's `author` as it does today. Export writes the publisher's
@@ -302,9 +306,9 @@ type QuizCard = {
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/api/quizzes?q=&tag=&sort=top|new|popular&page=` | none | published only. `q` is `LIKE '%q%'` on title and description. `tag` is an exact match. Both given means both must match. |
-| POST | `/api/quizzes` | user | body `{ title, description, tags, questions }`. Creates a draft. Returns `{ id }`. |
-| GET | `/api/quizzes/:id` | none | published: card plus `myVote` (0 if signed out), `leaderboard`, and `myBest` as `{ correct, total, durationMs }` or null. Author gets the full quiz too: `questions` with answers, `published`, `version`. Drafts return 404 to anyone but the author. |
+| GET | `/api/quizzes?q=&tag=&lang=&sort=top|new|popular&page=` | none | published only. `q` is `LIKE '%q%'` on title and description. `tag` and `lang` are exact matches. Every given filter must match. |
+| POST | `/api/quizzes` | user | body `{ title, description, tags, language, questions, translationOf? }`. Creates a draft. `translationOf` links the draft to that quiz's translation group (see section 12). Returns `{ id }`. |
+| GET | `/api/quizzes/:id` | none | published: card plus `myVote` (0 if signed out), `leaderboard`, and `myBest` as `{ correct, total, durationMs }` or null. Also `language`, `translationOf` (root id or null) and `translations` (`[{ id, title, language }]`, the other published members of the group). Any signed-in user gets `questions` with answers, so they can translate. The author also gets `published`. Drafts return 404 to anyone but the author. |
 | PUT | `/api/quizzes/:id` | author | same body as POST. If the quiz has ever been published (`published_at` set) and the `questions` JSON changed, `version` increments. Unpublishing to edit does not skip the bump. |
 | DELETE | `/api/quizzes/:id` | author, or admin if published | cascades tags, votes, attempts |
 | POST | `/api/quizzes/:id/publish` | author | sets `published=1`, `published_at=now` if null |
@@ -316,7 +320,8 @@ type QuizCard = {
 Validation on POST and PUT: `title` 1 to 120 chars after trim, `description` up to
 1000, `tags` up to 5 after normalizing, `questions` passes `validateQuizData` and has at
 least one question. Tag normalization: trim, lowercase, spaces to hyphens, must match
-`^[a-z0-9][a-z0-9-]{0,29}$`, duplicates dropped.
+`^[a-z0-9][a-z0-9-]{0,29}$`, duplicates dropped. `language` must be a code from
+`shared/languages.ts`; missing means `en`.
 
 ### Play
 
@@ -401,6 +406,23 @@ play is not counted anywhere.
 - Leaderboard shows only the current version. After an author changes questions it
   starts empty. The quiz page says "Leaderboard reset when the quiz was updated" when
   `version > 1` and the board is empty.
+
+### Languages and translations
+
+Every quiz has a `language` (ISO 639-1 code from the list in `shared/languages.ts`,
+default `en`). The catalog filters by it (`?lang=`); cards and the quiz page show it
+next to the tags, and the file format carries it as `metadata.language`.
+
+A translation is a separate quiz row whose `translation_of` points at the root quiz.
+Any signed-in user can add one from a published quiz's page ("Add translation"): the
+publish form opens in editor mode with the source title, description, tags and
+questions filled in, the user picks the target language and rewrites the text. The
+translation has its own author, votes and leaderboard. A translation of a translation
+still points at the root, so a group is the root plus every row whose
+`translation_of` is the root. The quiz page lists the other published members as
+"Also in" links. The server refuses a draft in a language the group already has
+published. Deleting the root sets `translation_of` to NULL on its translations, which
+then stand alone.
 
 ## 13. Editor
 
@@ -637,6 +659,7 @@ comment at the spot in code.
 | No rate limiting | Abuse can hammer publish or grade | `limit_req` in nginx or Caddy |
 | Finished race players hold the answer key | Friends can share answers | withhold results until the room finishes |
 | Anonymous grading returns the full answer key | Anyone can read a published quiz's answers with one request and then submit a perfect attempt, so the leaderboard runs on trust | return per-question correctness and explanations without `answer` on the anonymous route, or require an attempt id for the full key |
+| Signed-in users get the full questions on `GET /api/quizzes/:id` | Anyone with an account can read a published quiz's answers, which they could already do through anonymous grading | return prompts and options without `answer` on a translate endpoint and copy the answer indexes server-side, since a translation keeps the option order |
 | No host transfer in rooms | Host leaving strands a sync room at reveal | auto-advance timer on reveal |
 
 ## 20. Out of scope for the first implementation plan

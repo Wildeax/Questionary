@@ -162,4 +162,34 @@ describe("quiz routes", () => {
     assert.deepEqual(r.json.items, []);
     assert.equal(r.json.hasMore, false);
   });
+
+  it("stores a language, filters by it, and links translations to the root", async () => {
+    const root = (await api(t.base, "POST", "/api/quizzes", { ...body, title: "Unity in English" }, alice.cookie)).json.id;
+    await api(t.base, "POST", `/api/quizzes/${root}/publish`, undefined, alice.cookie);
+    const es = await api(t.base, "POST", "/api/quizzes", { ...body, title: "Unity en español", language: "es", translationOf: root }, bob.cookie);
+    assert.equal(es.status, 201);
+    await api(t.base, "POST", `/api/quizzes/${es.json.id}/publish`, undefined, bob.cookie);
+    const list = await api(t.base, "GET", "/api/quizzes?lang=es");
+    assert.deepEqual(list.json.items.map((q: { id: number; language: string }) => [q.id, q.language]), [[es.json.id, "es"]]);
+    const en = await api(t.base, "GET", `/api/quizzes/${root}`);
+    assert.equal(en.json.language, "en");
+    assert.equal(en.json.translationOf, null);
+    assert.deepEqual(en.json.translations, [{ id: es.json.id, title: "Unity en español", language: "es" }]);
+    const esDetail = await api(t.base, "GET", `/api/quizzes/${es.json.id}`, undefined, alice.cookie);
+    assert.equal(esDetail.json.translationOf, root);
+    assert.deepEqual(esDetail.json.translations, [{ id: root, title: "Unity in English", language: "en" }]);
+    assert.equal(esDetail.json.questions.length, 2, "signed-in users get the questions so they can translate");
+    assert.equal(esDetail.json.published, undefined, "only the author sees the draft flag");
+    const fr = await api(t.base, "POST", "/api/quizzes", { ...body, language: "fr", translationOf: es.json.id }, alice.cookie);
+    const frDetail = await api(t.base, "GET", `/api/quizzes/${fr.json.id}`, undefined, alice.cookie);
+    assert.equal(frDetail.json.translationOf, root, "a translation of a translation points at the root");
+    const dup = await api(t.base, "POST", "/api/quizzes", { ...body, language: "es", translationOf: root }, alice.cookie);
+    assert.equal(dup.status, 400);
+    assert.match(dup.json.error, /already exists in Español/);
+    const bad = await api(t.base, "POST", "/api/quizzes", { ...body, language: "xx" }, alice.cookie);
+    assert.equal(bad.status, 400);
+    assert.match(bad.json.error, /Unknown language/);
+    const exported = await api(t.base, "GET", `/api/quizzes/${es.json.id}/export`, undefined, bob.cookie);
+    assert.match(exported.json, /language: es/);
+  });
 });

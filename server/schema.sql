@@ -7,19 +7,22 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS quizzes (
-  id            INTEGER PRIMARY KEY,
-  author_id     INTEGER NOT NULL REFERENCES users(id),
-  title         TEXT    NOT NULL,
-  description   TEXT    NOT NULL DEFAULT '',
-  questions     TEXT    NOT NULL,
-  version       INTEGER NOT NULL DEFAULT 1,
-  published     INTEGER NOT NULL DEFAULT 0,
-  created_at    INTEGER NOT NULL,
-  updated_at    INTEGER NOT NULL,
-  published_at  INTEGER
+  id              INTEGER PRIMARY KEY,
+  author_id       INTEGER NOT NULL REFERENCES users(id),
+  title           TEXT    NOT NULL,
+  description     TEXT    NOT NULL DEFAULT '',
+  questions       TEXT    NOT NULL,
+  version         INTEGER NOT NULL DEFAULT 1,
+  published       INTEGER NOT NULL DEFAULT 0,
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL,
+  published_at    INTEGER,
+  language        TEXT    NOT NULL DEFAULT 'en',
+  translation_of  INTEGER REFERENCES quizzes(id) ON DELETE SET NULL
 );
-CREATE INDEX IF NOT EXISTS quizzes_published ON quizzes(published, published_at);
-CREATE INDEX IF NOT EXISTS quizzes_author    ON quizzes(author_id);
+CREATE INDEX IF NOT EXISTS quizzes_published   ON quizzes(published, published_at);
+CREATE INDEX IF NOT EXISTS quizzes_author      ON quizzes(author_id);
+CREATE INDEX IF NOT EXISTS quizzes_translation ON quizzes(translation_of);
 
 CREATE TABLE IF NOT EXISTS quiz_tags (
   quiz_id  INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,

@@ -8,7 +8,8 @@ export function getTemplate(kind: "json" | "yaml") {
       "name": "My Quiz Title",
       "author": "Your Name (optional)",
       "description": "What this quiz covers (optional)",
-      "tags": ["topic", "level"]
+      "tags": ["topic", "level"],
+      "language": "en"
     }
   },
   {
@@ -32,6 +33,7 @@ export function getTemplate(kind: "json" | "yaml") {
     author: "Your Name (optional)"
     description: "What this quiz covers (optional)"
     tags: ["topic", "level"]
+    language: en
 - id: q1
   type: mc
   prompt: "<your question here>"

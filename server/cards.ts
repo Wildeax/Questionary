@@ -6,7 +6,7 @@ import type { QuizCard } from "../shared/types.ts";
 // thousands of quizzes. Upgrade: counter columns kept by triggers.
 export const CARD_SELECT = `
   SELECT q.id, q.title, q.description, q.published, q.version, q.author_id, q.published_at,
-    q.updated_at, q.questions, u.username, u.avatar_url,
+    q.updated_at, q.questions, q.language, q.translation_of, u.username, u.avatar_url,
     json_array_length(q.questions) AS question_count,
     COALESCE((SELECT SUM(v.value) FROM votes v WHERE v.quiz_id = q.id), 0) AS score,
     (SELECT COUNT(*) FROM attempts a WHERE a.quiz_id = q.id AND a.finished_at IS NOT NULL) AS plays,
@@ -23,6 +23,8 @@ export type Row = {
   published_at: number | null;
   updated_at: number;
   questions: string;
+  language: string;
+  translation_of: number | null;
   username: string;
   avatar_url: string;
   question_count: number;
@@ -38,6 +40,7 @@ export function toCard(r: Row): QuizCard {
     description: r.description,
     author: { username: r.username, avatarUrl: r.avatar_url },
     tags: r.tags ? r.tags.split(",") : [],
+    language: r.language,
     questionCount: r.question_count,
     score: r.score,
     plays: r.plays,
