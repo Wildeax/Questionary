@@ -2,8 +2,8 @@
 
 Community quizzes. Sign in with GitHub, publish a quiz from a YAML or JSON file, and play
 quizzes other people published. Grading happens on the server, so the answer key never
-reaches the browser before you submit. Vote quizzes up or down, filter by tag, and compete
-on each quiz's leaderboard. The original offline mode still lives at `/local`.
+reaches the browser before you submit. Vote quizzes up or down, filter by tag, compete on each quiz's leaderboard, or host a room
+and race your friends live. The original offline mode still lives at `/local`.
 
 ## Run it locally
 
