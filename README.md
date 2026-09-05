@@ -60,6 +60,16 @@ with `sqlite3 questionary.db ".backup out.db"`.
 relies on Node's `--watch-path`, which Node documents for Windows and macOS. On Linux,
 run `npm start` and restart by hand, or use your own watcher.
 
+## Current deployment
+
+`https://questionary.wildeax.com` is served through a Cloudflare Tunnel named
+`questionary` from a Windows machine. Two logon tasks keep it up: "Questionary server"
+runs `node serverindex.ts` with `NODE_ENV=production` in a restart loop, and
+"Questionary tunnel" runs `cloudflared`. Both wrappers and their logs live in
+`%LOCALAPPDATA%Programsquestionary`. To pick up a new build or a changed `.env`,
+run `npm run build` and end the `node` process; the loop restarts it within five
+seconds. The site is only up while that machine is on and the user is logged in.
+
 ## Design
 
 `docs/superpowers/specs/2026-09-04-community-quizzes-design.md` holds the product and
