@@ -11,7 +11,7 @@ export function Editor({ value, onChange }: { value: Question[]; onChange: (ques
   return (
     <div className="space-y-4">
       {value.map((q, i) => (
-        <div key={q.id} className="bg-neutral-950 border border-neutral-800 rounded-xl p-4" data-question={q.id}>
+        <div key={i} className="bg-neutral-950 border border-neutral-800 rounded-xl p-4" data-question={q.id}>
           <div className="flex items-center justify-between gap-2 mb-3">
             <span className="text-xs text-neutral-400">{q.id}</span>
             <div className="flex gap-1">

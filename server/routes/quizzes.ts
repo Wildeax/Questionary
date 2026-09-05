@@ -6,6 +6,7 @@ import { HttpError, idParam } from "../http.ts";
 import { CARD_SELECT, getQuizRow, replaceTags, toCard, type Row } from "../cards.ts";
 import { bestFor, leaderboardFor, scoreOf, voteOf } from "../social.ts";
 import { validateQuizInput, type QuizInput } from "../../shared/validate.ts";
+import { quizDocument, slugify } from "../../shared/document.ts";
 import type { Question } from "../../shared/types.ts";
 
 export const PAGE_SIZE = 20;
@@ -142,13 +143,12 @@ export function quizRoutes(db: Db): express.Router {
     const row = getQuizRow(db, idParam(req.params.id));
     authorize(row, me, false);
     const tags = row.tags ? row.tags.split(",") : [];
-    const metadata: Record<string, unknown> = { name: row.title, author: row.username };
-    if (row.description) metadata.description = row.description;
-    if (tags.length) metadata.tags = tags;
-    const doc = [{ metadata }, ...(JSON.parse(row.questions) as Question[])];
-    const filename = row.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "quiz";
+    const doc = quizDocument(
+      { name: row.title, author: row.username, description: row.description || undefined, tags: tags.length ? tags : undefined },
+      JSON.parse(row.questions) as Question[]
+    );
     res.setHeader("Content-Type", "application/yaml; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}.yaml"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${slugify(row.title)}.yaml"`);
     res.send(dump(doc, { lineWidth: -1 }));
   });
 

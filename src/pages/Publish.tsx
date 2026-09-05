@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { dump } from "js-yaml";
-import type { Question } from "../../shared/types.ts";
+import type { Question, QuizMetadata } from "../../shared/types.ts";
 import { parseQuestionsFromText, validateQuizInput, type QuizInput } from "../../shared/validate.ts";
+import { quizDocument, slugify } from "../../shared/document.ts";
 import { blankQuestion } from "../../shared/editor.ts";
 import { createQuiz, getQuiz, publishQuiz, updateQuiz } from "../api.ts";
 import { getTemplate } from "../templates.ts";
@@ -13,6 +14,7 @@ import { Editor } from "../components/Editor.tsx";
 
 const field = "w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40";
 const btn = "inline-flex items-center justify-center rounded-xl px-4 py-2 transition disabled:opacity-50";
+const UNTITLED = "Untitled quiz";
 
 export function Publish() {
   const { id } = useParams();
@@ -48,10 +50,11 @@ export function Publish() {
         setDescription(q.description);
         setTags(q.tags);
         setPublished(q.published === true);
-        const metadata: Record<string, unknown> = { name: q.title };
-        if (q.description) metadata.description = q.description;
-        if (q.tags.length) metadata.tags = q.tags;
-        setText(dump([{ metadata }, ...q.questions], { lineWidth: -1 }));
+        setText(
+          dump(quizDocument({ name: q.title, description: q.description || undefined, tags: q.tags.length ? q.tags : undefined }, q.questions), {
+            lineWidth: -1,
+          })
+        );
         setCount(q.questions.length);
         setQuestions(q.questions);
       })
@@ -82,12 +85,9 @@ export function Publish() {
     reader.readAsText(file);
   }
 
-  /** The full document: metadata first, then the questions. Used for the upload tab and the download. */
-  function documentFor(qs: Question[]): unknown[] {
-    const metadata: Record<string, unknown> = { name: title.trim() || "Untitled quiz" };
-    if (description.trim()) metadata.description = description.trim();
-    if (tags.length) metadata.tags = tags;
-    return [{ metadata }, ...qs];
+  /** Metadata from the form fields, for the upload-tab dump and the download. */
+  function metadataFor(): QuizMetadata {
+    return { name: title.trim() || UNTITLED, description: description.trim() || undefined, tags: tags.length ? tags : undefined };
   }
 
   function switchMode(next: "upload" | "editor") {
@@ -99,26 +99,28 @@ export function Publish() {
           const parsed = parseQuestionsFromText(text);
           setQuestions(parsed.questions);
           if (!title) setTitle(parsed.metadata.name);
+          if (!description && parsed.metadata.description) setDescription(parsed.metadata.description);
+          if (tags.length === 0 && parsed.metadata.tags?.length) setTags(parsed.metadata.tags);
         } catch (e) {
-          setError((e as Error).message);
+          setError(`${(e as Error).message}\n\nFix or clear the text above to open the editor.`);
           return;
         }
       } else if (questions.length === 0) {
         setQuestions([blankQuestion(0)]);
       }
     } else {
-      setText(dump(documentFor(questions), { lineWidth: -1 }));
+      setText(questions.length ? dump(quizDocument(metadataFor(), questions), { lineWidth: -1 }) : "");
       setCount(questions.length);
     }
     setMode(next);
   }
 
   function downloadYaml() {
-    const blob = new Blob([dump(documentFor(questions), { lineWidth: -1 })], { type: "application/yaml" });
+    const blob = new Blob([dump(quizDocument(metadataFor(), questions), { lineWidth: -1 })], { type: "application/yaml" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${(title.trim() || "quiz").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "quiz"}.yaml`;
+    a.download = `${slugify(title.trim())}.yaml`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -129,6 +131,7 @@ export function Publish() {
         return validateQuizInput({ title, description, tags, questions });
       }
       const parsed = parseQuestionsFromText(text);
+      if (!title.trim() && parsed.metadata.name === UNTITLED) throw new Error("Title must be 1 to 120 characters.");
       return validateQuizInput({
         title: title.trim() || parsed.metadata.name,
         description: description.trim() || parsed.metadata.description || "",
@@ -198,7 +201,7 @@ export function Publish() {
           <p className="text-xs text-neutral-500 mt-2 mb-2">
             Paste a full quiz document or upload a file. The title and description above win over the file's metadata when both are set.
           </p>
-          <textarea value={text} onChange={(e) => onTextChange(e.target.value)} rows={16} className={`${field} font-mono`} />
+          <textarea value={text} onChange={(e) => onTextChange(e.target.value)} rows={16} aria-label="Quiz document" className={`${field} font-mono`} />
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
             <label className={`${btn} bg-neutral-800 hover:bg-neutral-700 cursor-pointer`}>
               <input

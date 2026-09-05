@@ -38,7 +38,7 @@ export function addOption(q: MCQuestion): MCQuestion {
   return { ...q, options: [...q.options, ""] };
 }
 
-/** Drops an option and keeps `answer` on the same text. Refuses to go below two options. */
+/** Drops an option. The answer keeps pointing at the same text; if the removed option was the answer, the first option becomes it. Refuses to go below two options. */
 export function removeOption(q: MCQuestion, index: number): MCQuestion {
   if (q.options.length <= 2) return q;
   const options = q.options.filter((_, i) => i !== index);
