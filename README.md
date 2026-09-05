@@ -1,147 +1,64 @@
-# 🎯 Questionary
+# Questionary
 
-A modern, interactive quiz application for educational purposes. Built with React, TypeScript, and Tailwind CSS for a smooth and responsive user experience.
+Community quizzes. Sign in with GitHub, publish a quiz from a YAML or JSON file, and play
+quizzes other people published. Grading happens on the server, so the answer key never
+reaches the browser before you submit. The original offline mode still lives at `/local`.
 
-## ✨ Features
+## Run it locally
 
-- **📚 Multiple Question Formats**: Support for multiple choice (MC) and true/false (TF) questions
-- **📄 Flexible Data Sources**: Load questions from JSON or YAML files
-- **🎲 Quiz Customization**: Randomize question order for varied practice sessions
-- **📊 Progress Tracking**: Real-time progress monitoring and detailed results
-- **🔄 Session Persistence**: Resume unfinished quizzes automatically
-- **📱 Responsive Design**: Optimized for desktop and mobile devices
-- **🎨 Modern UI**: Clean, dark-themed interface with smooth animations
+Requires Node 22 or newer.
 
-## 🚀 Getting Started
+1. `npm install`
+2. Register a GitHub OAuth app at https://github.com/settings/developers with callback
+   URL `http://localhost:3000/api/auth/github/callback`.
+3. `cp .env.example .env` and fill in `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and a
+   random `SESSION_SECRET`.
+4. `npm run dev` and open http://localhost:3000.
 
-### Prerequisites
+`npm test` runs the server tests. `npm run build` type-checks both sides and builds the
+frontend into `dist/`.
 
-- Node.js (v16 or higher)
-- npm or yarn
+## Quiz file format
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Wildeax/Questionary.git
-   cd Questionary
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-4. **Open your browser** and navigate to `http://localhost:5173`
-
-## 📖 Usage
-
-### Loading Questions
-
-The application supports two ways to load quiz questions:
-
-1. **Paste Content**: Copy and paste JSON or YAML formatted questions directly into the text area
-2. **Upload File**: Upload `.json`, `.yaml`, or `.yml` files containing your questions
-
-### Question Format
-
-All documents must start with metadata containing the quiz name (required) and optional author:
+A document is a list. The first item is metadata, the rest are questions.
 
 ```yaml
 - metadata:
-  name: "Your Quiz Name"  # Required
-  author: "Your Name"     # Optional
-```
-
-#### Multiple Choice Questions
-```yaml
+    name: "Unity basics"          # required
+    author: "you"                 # optional, shown in offline mode only
+    description: "Warm-up set"    # optional, prefills the publish form
+    tags: [unity, csharp]         # optional, up to 5
 - id: Q001
   type: mc
-  prompt: "Your question here?"
-  options:
-    - "Option A"
-    - "Option B"
-    - "Option C"
-    - "Option D"
-  answer: 2  # Index of correct answer (0-based)
-  explanation: "Optional explanation for the correct answer"
-```
-
-#### True/False Questions
-```yaml
+  prompt: "Which call allocates on the managed heap?"
+  options: ["A", "B", "C", "D"]
+  answer: 2                       # 0-based index
+  explanation: "Optional"
 - id: Q002
   type: tf
   prompt: "This statement is true."
   answer: true
-  explanation: "Optional explanation"
 ```
 
-## 🛠️ Development
+## Deploy
 
-### Available Scripts
+One process. Build once, then run with `NODE_ENV=production`:
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-
-### Project Structure
-
-```
-src/
-├── components/          # React components
-│   ├── SetupView.tsx    # Question loading interface
-│   ├── SettingsView.tsx # Quiz configuration
-│   ├── QuestionPage.tsx # Quiz taking interface
-│   └── ResultsView.tsx  # Results display
-├── types.ts            # TypeScript type definitions
-├── utils.ts            # Utility functions
-├── storage.ts          # Local storage management
-├── templates.ts        # Question format templates
-└── export.ts           # Data export utilities
+```bash
+npm ci && npm run build
+NODE_ENV=production node server/index.ts
 ```
 
-### Technologies Used
+The server reads `.env` from the project root if present; otherwise the environment
+must carry the settings. Put Caddy or nginx in front for TLS and set `BASE_URL` to the
+public origin. The database is the single SQLite file at `DATABASE_PATH`. Back it up
+with `sqlite3 questionary.db ".backup out.db"`.
 
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **Tailwind CSS** - Styling
-- **js-yaml** - YAML parsing
-- **ESLint** - Code linting
+`npm run dev` restarts the server when files under `server/` or `shared/` change and
+relies on Node's `--watch-path`, which Node documents for Windows and macOS. On Linux,
+run `npm start` and restart by hand, or use your own watcher.
 
-## 📊 Sample Questions
+## Design
 
-The repository includes sample questions covering various educational topics. You can easily create your own question sets for:
-
-- Academic subjects and courses
-- Certification exam preparation
-- Professional training modules
-- Assessment and testing scenarios
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built for educational and assessment purposes
-- Inspired by the need for effective, interactive study tools
-- Questions can be customized for any subject matter
-
----
-
-**Happy studying! 🎓** Master any subject with confidence.
+`docs/superpowers/specs/2026-09-04-community-quizzes-design.md` holds the product and
+technical design. Plans per phase live in `docs/superpowers/plans/`.
