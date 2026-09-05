@@ -99,10 +99,11 @@ TypeScript files directly by stripping types, so the server has no build step.
 - Live room state is pushed over Server-Sent Events. Actions come in as POSTs.
 
 Runtime dependencies added: `express` 5 (5.2 at the time of writing; async route
-errors reach the error middleware without wrappers) and `react-router` (8.x at the time
-of writing; the `react-router-dom` package is a compatibility re-export and is not
-used). Dev dependencies added: `@types/express` 5, `@types/node`. Everything else is
-stdlib or already installed (`js-yaml`, `react`, `vite`, `tailwindcss`, TypeScript 5.9).
+errors reach the error middleware without wrappers) and `react-router` pinned to 7.x
+(8.x requires React 19.2 and this app is on React 18; the `react-router-dom` package is
+a compatibility re-export and is not used). Dev dependencies added: `@types/express` 5,
+`@types/node` 22. Everything else is stdlib or already installed (`js-yaml`, `react`,
+`vite`, `tailwindcss`, TypeScript 5.9).
 
 ## 6. Repo changes
 
