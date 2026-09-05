@@ -131,9 +131,9 @@ Edit `package.json` so the top and scripts read:
   "description": "Community quizzes: publish, play, compete",
   "type": "module",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --watch server/index.ts",
+    "dev": "node --watch-path=server --watch-path=shared server/index.ts",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.server.json && vite build",
-    "start": "node --env-file-if-exists=.env server/index.ts",
+    "start": "node server/index.ts",
     "test": "node --test \"server/test/*.test.ts\"",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
@@ -1116,8 +1116,8 @@ export class HttpError extends Error {
   }
 }
 
-/** Parses a positive integer route param or throws 404. */
-export function idParam(raw: string | undefined): number {
+/** Parses a positive integer route param or throws 404. Takes unknown so Express 5's widened req.params needs no casts. */
+export function idParam(raw: unknown): number {
   const n = Number(raw);
   if (!Number.isInteger(n) || n < 1) throw new HttpError(404, "Not found");
   return n;
@@ -1386,6 +1386,18 @@ import { openDb } from "./db.ts";
 import type { Config } from "./auth.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+// Load .env here instead of with --env-file. Node's watch mode registers the env
+// file, and on Windows that means watching its directory, the project root,
+// recursively, so every SQLite write under data/ would restart the server.
+try {
+  process.loadEnvFile(join(root, ".env"));
+} catch (err) {
+  // A missing .env is fine: the environment itself carries the settings.
+  // Anything else (unreadable file, a directory at that path) must surface.
+  if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+}
+
 const production = process.env.NODE_ENV === "production";
 
 function env(name: string, fallback?: string): string {
@@ -1586,7 +1598,7 @@ describe("quiz routes", () => {
   });
 
   it("bumps the version when questions change on a published quiz", async () => {
-    const changed = { ...body, questions: [{ ...sampleQuestions[0], answer: 2 }, sampleQuestions[1]] };
+    const changed = { ...body, title: "Unity basics 2", questions: [{ ...sampleQuestions[0], answer: 2 }, sampleQuestions[1]] };
     const r = await api(t.base, "PUT", `/api/quizzes/${id}`, changed, alice.cookie);
     assert.equal(r.status, 200);
     assert.equal(r.json.version, 2);
@@ -3936,12 +3948,17 @@ One process. Build once, then run with `NODE_ENV=production`:
 
 ```bash
 npm ci && npm run build
-NODE_ENV=production node --env-file=.env server/index.ts
+NODE_ENV=production node server/index.ts
 ```
 
-Put Caddy or nginx in front for TLS and set `BASE_URL` to the public origin. The database
-is the single SQLite file at `DATABASE_PATH`. Back it up with
-`sqlite3 questionary.db ".backup out.db"`.
+The server reads `.env` from the project root if present; otherwise the environment
+must carry the settings. Put Caddy or nginx in front for TLS and set `BASE_URL` to the
+public origin. The database is the single SQLite file at `DATABASE_PATH`. Back it up
+with `sqlite3 questionary.db ".backup out.db"`.
+
+`npm run dev` restarts the server when files under `server/` or `shared/` change and
+relies on Node's `--watch-path`, which Node documents for Windows and macOS. On Linux,
+run `npm start` and restart by hand, or use your own watcher.
 
 ## Design
 
