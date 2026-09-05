@@ -4,6 +4,7 @@ import express from "express";
 import { createApp } from "./app.ts";
 import { openDb } from "./db.ts";
 import { errorHandler } from "./http.ts";
+import { RoomStore } from "./rooms.ts";
 import type { Config } from "./auth.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -40,7 +41,8 @@ const config: Config = {
 };
 
 const db = openDb(env("DATABASE_PATH", join(root, "data", "questionary.db")));
-const app = createApp(db, config);
+const store = new RoomStore();
+const app = createApp(db, config, store);
 
 if (production) {
   const dist = join(root, "dist");
@@ -63,3 +65,6 @@ const port = Number(process.env.PORT ?? 3000);
 app.listen(port, () => {
   console.log(`Questionary listening on http://localhost:${port}${production ? "" : " (dev, Vite middleware)"}`);
 });
+
+// Rooms idle for two hours are dropped every five minutes.
+setInterval(() => store.sweep(2 * 60 * 60 * 1000), 5 * 60 * 1000).unref();
