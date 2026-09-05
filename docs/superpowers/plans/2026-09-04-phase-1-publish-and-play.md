@@ -1776,7 +1776,10 @@ export function quizRoutes(db: Db): express.Router {
   r.get("/quizzes", (req, res) => {
     const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
     const tag = typeof req.query.tag === "string" ? req.query.tag.trim().toLowerCase() : "";
-    const sort = SORTS[String(req.query.sort)] ?? SORTS.top;
+    // Own-property lookup only: "constructor" or "__proto__" would otherwise resolve
+    // to an inherited member and land in ORDER BY.
+    const key = String(req.query.sort ?? "top");
+    const sort = Object.hasOwn(SORTS, key) ? SORTS[key] : SORTS.top;
     const page = Math.max(1, Math.floor(Number(req.query.page)) || 1);
     // ponytail: LIKE '%q%' search, full scan, no ranking. Upgrade: FTS5 on title and description.
     const rows = db
