@@ -147,4 +147,12 @@ describe("quiz routes", () => {
     assert.equal(p2.json.items.length, 1);
     assert.equal(p2.json.hasMore, false);
   });
+
+  it("falls back to the default sort for unknown or prototype keys", async () => {
+    const proto = await api(t.base, "GET", "/api/quizzes?sort=constructor");
+    assert.equal(proto.status, 200);
+    const unknown = await api(t.base, "GET", "/api/quizzes?sort=sideways");
+    assert.equal(unknown.status, 200);
+    assert.equal(unknown.json.items.length, 20);
+  });
 });
