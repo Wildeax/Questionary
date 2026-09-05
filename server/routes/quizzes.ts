@@ -4,6 +4,7 @@ import { tx, type Db } from "../db.ts";
 import { getUser, requireMe, requireUser } from "../auth.ts";
 import { HttpError, idParam } from "../http.ts";
 import { CARD_SELECT, getQuizRow, replaceTags, toCard, type Row } from "../cards.ts";
+import { bestFor, leaderboardFor, scoreOf, voteOf } from "../social.ts";
 import { validateQuizInput, type QuizInput } from "../../shared/validate.ts";
 import type { Question } from "../../shared/types.ts";
 
@@ -77,12 +78,18 @@ export function quizRoutes(db: Db): express.Router {
     const me = getUser(res);
     const isAuthor = me?.id === row.author_id;
     if (!row.published && !isAuthor) throw new HttpError(404, "Not found");
-    const card = toCard(row);
+    const detail = {
+      ...toCard(row),
+      version: row.version,
+      myVote: me ? voteOf(db, row.id, me.id) : 0,
+      leaderboard: leaderboardFor(db, row.id, row.version),
+      myBest: me ? bestFor(db, row.id, row.version, me.id) : null,
+    };
     if (isAuthor) {
-      res.json({ ...card, questions: JSON.parse(row.questions) as Question[], published: row.published === 1, version: row.version });
+      res.json({ ...detail, questions: JSON.parse(row.questions) as Question[], published: row.published === 1 });
       return;
     }
-    res.json(card);
+    res.json(detail);
   });
 
   r.put("/quizzes/:id", requireUser, (req, res) => {
@@ -142,6 +149,29 @@ export function quizRoutes(db: Db): express.Router {
     res.setHeader("Content-Type", "application/yaml; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}.yaml"`);
     res.send(dump(doc, { lineWidth: -1 }));
+  });
+
+  r.put("/quizzes/:id/vote", requireUser, (req, res) => {
+    const me = requireMe(res);
+    const row = getQuizRow(db, idParam(req.params.id));
+    if (!row.published) throw new HttpError(404, "Not found");
+    if (row.author_id === me.id) throw new HttpError(403, "You cannot vote on your own quiz");
+    const value = (req.body as { value?: unknown } | null)?.value;
+    if (value !== 1 && value !== -1 && value !== 0) throw new HttpError(400, "value must be 1, -1, or 0");
+    if (value === 0) {
+      db.prepare("DELETE FROM votes WHERE user_id = ? AND quiz_id = ?").run(me.id, row.id);
+    } else {
+      db.prepare(
+        "INSERT INTO votes (user_id, quiz_id, value) VALUES (?, ?, ?) ON CONFLICT(user_id, quiz_id) DO UPDATE SET value = excluded.value"
+      ).run(me.id, row.id, value);
+    }
+    res.json({ score: scoreOf(db, row.id), myVote: value });
+  });
+
+  r.get("/quizzes/:id/leaderboard", (req, res) => {
+    const row = getQuizRow(db, idParam(req.params.id));
+    if (!row.published) throw new HttpError(404, "Not found");
+    res.json(leaderboardFor(db, row.id, row.version));
   });
 
   return r;

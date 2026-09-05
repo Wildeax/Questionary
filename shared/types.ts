@@ -79,3 +79,32 @@ export type Me = {
   avatarUrl: string;
   isAdmin: boolean;
 };
+
+export type LeaderboardEntry = {
+  username: string;
+  avatarUrl: string;
+  correct: number;
+  total: number;
+  durationMs: number;
+  finishedAt: number;
+};
+
+export type BestAttempt = {
+  correct: number;
+  total: number;
+  durationMs: number;
+};
+
+export type TagCount = {
+  tag: string;
+  count: number;
+};
+
+export type AttemptSummary = {
+  id: number;
+  quiz: { id: number; title: string };
+  correct: number;
+  total: number;
+  durationMs: number;
+  finishedAt: number;
+};
