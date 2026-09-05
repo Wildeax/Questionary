@@ -9,7 +9,7 @@ export class HttpError extends Error {
 }
 
 /** Parses a positive integer route param or throws 404. */
-export function idParam(raw: string | undefined): number {
+export function idParam(raw: unknown): number {
   const n = Number(raw);
   if (!Number.isInteger(n) || n < 1) throw new HttpError(404, "Not found");
   return n;
