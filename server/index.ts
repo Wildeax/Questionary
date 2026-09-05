@@ -6,6 +6,16 @@ import { openDb } from "./db.ts";
 import type { Config } from "./auth.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+// Load .env here instead of with --env-file. Node's watch mode registers the env
+// file, and on Windows that means watching its directory, the project root,
+// recursively, so every SQLite write under data/ would restart the server.
+try {
+  process.loadEnvFile(join(root, ".env"));
+} catch {
+  // No .env file. The environment itself must carry the settings.
+}
+
 const production = process.env.NODE_ENV === "production";
 
 function env(name: string, fallback?: string): string {
