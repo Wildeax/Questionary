@@ -3421,7 +3421,7 @@ Claude-Session: https://claude.ai/code/session_01MH44PLVsdJ842ZraNvQHtF"
 - [ ] **Step 1: Create src/pages/Play.tsx**
 
 ```tsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import type { Answers, PlayQuizData, Question, SavedQuizState } from "../../shared/types.ts";
 import { ApiError, getPlay, gradeAnonymous, startAttempt, submitAttempt } from "../api.ts";
@@ -3444,12 +3444,16 @@ export function Play() {
   const { me, loading } = useMe();
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>({ kind: "loading" });
+  // Only the latest start() may set state; older responses are ignored.
+  const runToken = useRef(0);
   const saveId = `online_${quizId}`;
 
   async function start() {
+    const token = ++runToken.current;
     setPhase({ kind: "loading" });
     try {
       const s = me ? await startAttempt(quizId) : await getPlay(quizId);
+      if (token !== runToken.current) return;
       setPhase({
         kind: "run",
         data: { metadata: { name: s.title, author: s.author.username }, questions: s.questions },
@@ -3459,6 +3463,7 @@ export function Play() {
         runKey: Date.now(),
       });
     } catch (e) {
+      if (token !== runToken.current) return;
       setPhase({ kind: "error", message: (e as Error).message });
     }
   }
@@ -3474,6 +3479,7 @@ export function Play() {
     })();
     return () => {
       alive = false;
+      runToken.current++;
     };
     // start() closes over me and quizId, both listed here.
   }, [loading, me, quizId]);
