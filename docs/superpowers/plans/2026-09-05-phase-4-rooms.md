@@ -397,6 +397,9 @@ export type RaceAnswerResult =
   | { finished: false }
   | { finished: true; correct: number; total: number; durationMs: number; questions: Question[] };
 
+/** Sync mode answers with `{ ok: true }`; the optional `finished` keeps the union narrowable. */
+export type AnswerResult = { ok: true; finished?: undefined } | RaceAnswerResult;
+
 export function newPlayerId(): string {
   return randomBytes(16).toString("hex");
 }
@@ -476,7 +479,7 @@ export class RoomStore {
     this.showQuestion(room, 0);
   }
 
-  answer(room: Room, playerId: string, questionId: string, value: number | boolean): RaceAnswerResult | { ok: true } {
+  answer(room: Room, playerId: string, questionId: string, value: number | boolean): AnswerResult {
     const player = this.requirePlayer(room, playerId);
     const question = room.quiz.questions.find((q) => q.id === questionId);
     if (!question) throw new HttpError(400, "Unknown question");
