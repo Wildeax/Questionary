@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import type { Answers, PlayQuizData, Question, SavedQuizState } from "../../shared/types.ts";
 import { ApiError, getPlay, gradeAnonymous, startAttempt, submitAttempt } from "../api.ts";
@@ -22,11 +22,14 @@ export function Play() {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>({ kind: "loading" });
   const saveId = `online_${quizId}`;
+  const runToken = useRef(0);
 
   async function start() {
+    const token = ++runToken.current;
     setPhase({ kind: "loading" });
     try {
       const s = me ? await startAttempt(quizId) : await getPlay(quizId);
+      if (token !== runToken.current) return;
       setPhase({
         kind: "run",
         data: { metadata: { name: s.title, author: s.author.username }, questions: s.questions },
@@ -36,6 +39,7 @@ export function Play() {
         runKey: Date.now(),
       });
     } catch (e) {
+      if (token !== runToken.current) return;
       setPhase({ kind: "error", message: (e as Error).message });
     }
   }
@@ -51,6 +55,7 @@ export function Play() {
     })();
     return () => {
       alive = false;
+      runToken.current++;
     };
     // start() closes over me and quizId, both listed here.
   }, [loading, me, quizId]);
