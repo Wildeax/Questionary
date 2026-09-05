@@ -29,7 +29,8 @@ function Header() {
   return (
     <header className="w-full border-b border-neutral-800 sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
       <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-4">
-        <Link to="/" className="text-lg font-semibold tracking-tight whitespace-nowrap">
+        <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight whitespace-nowrap">
+          <img src="/icon.svg" alt="" className="h-7 w-7" />
           Questionary
         </Link>
         <form
