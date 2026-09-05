@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { listQuizzes, type QuizPage } from "../api.ts";
+import { getTags, listQuizzes, type QuizPage } from "../api.ts";
+import type { TagCount } from "../../shared/types.ts";
 import { QuizCardView } from "../components/QuizCardView.tsx";
 import { ErrorBox } from "../components/ErrorBox.tsx";
 
@@ -14,6 +15,7 @@ export function Catalog() {
   const page = Math.max(1, Number(params.get("page")) || 1);
   const [data, setData] = useState<QuizPage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tags, setTags] = useState<TagCount[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -25,6 +27,16 @@ export function Catalog() {
       alive = false;
     };
   }, [q, sort, tag, page]);
+
+  useEffect(() => {
+    let alive = true;
+    getTags()
+      .then((t) => alive && setTags(t))
+      .catch(() => alive && setTags([]));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params);
@@ -63,6 +75,20 @@ export function Catalog() {
           </span>
         )}
       </div>
+
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {tags.map((t) => (
+            <button
+              key={t.tag}
+              onClick={() => setParam("tag", tag === t.tag ? "" : t.tag)}
+              className={`rounded-md px-2 py-0.5 text-xs ${tag === t.tag ? "bg-emerald-600 text-white" : "bg-neutral-800 hover:bg-neutral-700 text-neutral-300"}`}
+            >
+              {t.tag} <span className="opacity-60">{t.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {error && <ErrorBox message={error} />}
       {data && data.items.length === 0 && (

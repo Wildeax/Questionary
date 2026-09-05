@@ -6,6 +6,7 @@ import { createQuiz, getQuiz, publishQuiz, updateQuiz } from "../api.ts";
 import { getTemplate } from "../templates.ts";
 import { useMe } from "../me.tsx";
 import { ErrorBox } from "../components/ErrorBox.tsx";
+import { TagInput } from "../components/TagInput.tsx";
 
 const field = "w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40";
 const btn = "inline-flex items-center justify-center rounded-xl px-4 py-2 transition disabled:opacity-50";
@@ -121,6 +122,9 @@ export function Publish() {
 
       <label className="block text-sm text-neutral-300 mt-4 mb-1">Description</label>
       <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={1000} rows={3} className={field} />
+
+      <label className="block text-sm text-neutral-300 mt-4 mb-1">Tags</label>
+      <TagInput value={tags} onChange={setTags} />
 
       <label className="block text-sm text-neutral-300 mt-4 mb-1">Questions (YAML or JSON)</label>
       <p className="text-xs text-neutral-500 mb-2">
