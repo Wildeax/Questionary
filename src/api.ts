@@ -1,4 +1,4 @@
-import type { Answers, Me, PlayQuestion, Question, QuizCard } from "../shared/types.ts";
+import type { Answers, AttemptSummary, BestAttempt, LeaderboardEntry, Me, PlayQuestion, Question, QuizCard, TagCount } from "../shared/types.ts";
 import type { QuizInput } from "../shared/validate.ts";
 
 export class ApiError extends Error {
@@ -26,7 +26,14 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export type QuizPage = { items: QuizCard[]; page: number; hasMore: boolean };
-export type QuizDetail = QuizCard & { questions?: Question[]; published?: boolean; version?: number };
+export type QuizDetail = QuizCard & {
+  version: number;
+  myVote: number;
+  leaderboard: LeaderboardEntry[];
+  myBest: BestAttempt | null;
+  questions?: Question[];
+  published?: boolean;
+};
 export type PlayStart = {
   attemptId?: number;
   version: number;
@@ -68,3 +75,8 @@ export const gradeAnonymous = (id: number | string, answers: Answers) =>
 
 export const getProfile = (username: string) => request<Profile>("GET", `/api/users/${encodeURIComponent(username)}`);
 export const getMyQuizzes = () => request<MyQuizzes>("GET", "/api/me/quizzes");
+
+export const vote = (id: number | string, value: 1 | -1 | 0) =>
+  request<{ score: number; myVote: number }>("PUT", `/api/quizzes/${id}/vote`, { value });
+export const getTags = (q = "") => request<TagCount[]>("GET", `/api/tags${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+export const getMyAttempts = () => request<AttemptSummary[]>("GET", "/api/me/attempts");
