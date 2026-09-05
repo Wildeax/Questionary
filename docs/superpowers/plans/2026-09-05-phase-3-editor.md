@@ -498,8 +498,8 @@ Claude-Session: https://claude.ai/code/session_01BxXovJBHEBSQVrspo5Wc4G"
 
 Run by the controller with the headless checklist script. Each must pass before the phase is called done:
 
-1. On New quiz, insert the YAML template and switch to Editor: two rows appear, `Q001` and `Q002`, with the template's prompts and options loaded.
-2. Add question: a third row `Q003` appears with two blank options. Fill the prompt and options, add a third option, mark it correct.
+1. On New quiz, insert the YAML template and switch to Editor: two rows appear with the template's own ids (`q1`, `q2`, kept until the first edit) and its prompts and options loaded.
+2. Add question: the rows renumber to `Q001`, `Q002`, `Q003`, and the new row has two blank options. Fill the prompt and options, add a third option, mark it correct.
 3. Move `Q003` up: it becomes `Q002` and the old second question becomes `Q003`. Delete `Q001`: the rows renumber to `Q001`, `Q002`.
 4. Switch to Upload: the textarea holds YAML that contains the edited prompt. Switch back to Editor: the same rows come back.
 5. Download YAML: the file name ends in `.yaml` and the content contains the edited prompt.
