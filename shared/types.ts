@@ -108,3 +108,41 @@ export type AttemptSummary = {
   durationMs: number;
   finishedAt: number;
 };
+
+export type RoomMode = "race" | "sync";
+export type RoomState = "lobby" | "countdown" | "running" | "question" | "reveal" | "finished";
+
+export type RoomPlayerView = {
+  id: string;
+  nickname: string;
+  answered: number;
+  finished: boolean;
+  correct?: number;
+  durationMs?: number;
+  points?: number;
+  lastPoints?: number;
+};
+
+export type RoomQuestionView = {
+  index: number;
+  id: string;
+  prompt: string;
+  type: "mc" | "tf";
+  options?: string[];
+  endsAt: number;
+};
+
+export type RoomSnapshot = {
+  code: string;
+  mode: RoomMode;
+  state: RoomState;
+  questionSeconds: number;
+  quiz: { id: number; title: string; questionCount: number };
+  host: string;
+  you: { id: string; isHost: boolean; answered: string[] } | null;
+  players: RoomPlayerView[];
+  countdownEndsAt?: number;
+  question?: RoomQuestionView;
+  reveal?: { questionId: string; answer: number | boolean; explanation?: string; scoreboard: RoomPlayerView[] };
+  ranking?: RoomPlayerView[];
+};
